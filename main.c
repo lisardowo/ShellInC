@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-
+#include <unistd.h>
 
 
 #include "binariesManager.h"
@@ -48,12 +48,38 @@ void REPL()
     }
     else if(strcmp("echo", argv[0]) == 0)
     {
-      printf("%s\n", userInput + 5);
+      for(int i = 1 ; argv[i] != NULL ; i++)
+      {
+      printf("%s ", argv[i]);
+      }
+      printf("\n");
+    }
+    else if(strcmp("cd", argv[0]) == 0)
+    {
+      if(strcmp("~", argv[1]) == 0)
+      {
+        
+        char *home = getenv("HOME");
+        chdir(home);
+        
+      }
+      else if ((chdir(argv[1])) != 0)
+      {
+        printf("%s: %s: No such file or directory\n", argv[0], argv[1]);
+      }
+    }
+    else if(strcmp("pwd", argv[0]) == 0)
+    {
+      char cwd[1024];
+      if(getcwd(cwd, sizeof(cwd)))
+      {
+        printf("%s\n",cwd);
+      }
     }
     else if(strcmp("type", argv[0]) == 0)
     {
       
-      if(!strcmp("echo", argv[1]) || !strcmp("exit", argv[1]) || !strcmp("type", argv[1])) // not operator may seem odd but strcmp returns 0 if true, for if to properly works needs a 1 if true (reason of not)
+      if(!strcmp("echo", argv[1]) || !strcmp("exit", argv[1]) || !strcmp("type", argv[1]) || !strcmp("pwd", argv[1]) || !strcmp("cd", argv[1])) // not operator may seem odd but strcmp returns 0 if true, for if to properly works needs a 1 if true (reason of not)
       {
         printf("%s is a shell builtin\n", argv[1]);
       }
