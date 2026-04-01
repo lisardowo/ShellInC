@@ -45,6 +45,11 @@ void REPL()
     argumentCounter(userInput, &argumentCount);
     argumentExtractor(userInput, argumentCount);
     
+    if (argv[0] == NULL)
+    {
+      continue;
+    }
+
     for (int i = 0 ; argv[i] != NULL ; i++)
     {
       if (strcmp(argv[i], ">") == 0 || strcmp(argv[i], "1>") == 0)
