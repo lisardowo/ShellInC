@@ -1,4 +1,5 @@
 #include "binariesManager.h"
+#include "redirectOutput.h"
 
 char binPath[100000];
 
@@ -27,8 +28,10 @@ char* getPath(char *command)
   return NULL;
 }
 
-void executeBin()
+void executeBin(char *redirectPath, bool redirected)
 {
+  if(!redirected)
+  {
     char* binPath = getPath(argv[0]);
      
     if (binPath == NULL)
@@ -48,5 +51,10 @@ void executeBin()
       {
         wait(NULL);
       }
+    }
+  }
+    else
+    {
+      writeToFile(redirectPath, argv);
     }
 }

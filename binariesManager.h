@@ -9,4 +9,4 @@
 extern char binPath[100000];
 
 char* getPath(char *command);
-void executeBin();
+void executeBin(char *redirectPath, bool redirected);

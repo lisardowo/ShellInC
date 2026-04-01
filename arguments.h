@@ -14,4 +14,4 @@
 extern char *argv[100];
 void argumentCounter(char *userInput, int* argumentCount);
 void argumentExtractor(char *userInput, int argumentCount);
-
+bool toogleState(bool state);

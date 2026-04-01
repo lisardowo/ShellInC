@@ -32,7 +32,8 @@ void REPL()
     //set up
     memset(argv,0,sizeof(argv));
     int argumentCount = 0;
-
+    bool redirected = false;
+    char *redirectPath = NULL;
     //actuall terminal stuff
     printf("$ ");
     //manage input
@@ -41,12 +42,31 @@ void REPL()
     //count input
     argumentCounter(userInput, &argumentCount);
     argumentExtractor(userInput, argumentCount);
+    
+    for (int i = 0 ; argv[i] != NULL ; i++)
+    {
+      if (strcmp(argv[i], ">") == 0)
+      {
+        if (argv[i + 1] == NULL)
+        {
+          printf("syntax error: expected file after '>'\n");
+          redirected = false;
+          redirectPath = NULL;
+          break ;          
+        }
+        redirected = true;
+        redirectPath = argv[i + 1];
+        argv[i] = NULL;
+        
+        break;
+      }
+    }
 
     if(strcmp("exit", argv[0]) == 0)
     {
       break;
     }
-    else if(strcmp("echo", argv[0]) == 0)
+    else if((strcmp("echo", argv[0]) == 0) && !redirected)
     {
       for(int i = 1 ; argv[i] != NULL ; i++)
       {
@@ -68,7 +88,7 @@ void REPL()
         printf("%s: %s: No such file or directory\n", argv[0], argv[1]);
       }
     }
-    else if(strcmp("pwd", argv[0]) == 0)
+    else if((strcmp("pwd", argv[0]) == 0) && !redirected)
     {
       char cwd[1024];
       if(getcwd(cwd, sizeof(cwd)))
@@ -76,7 +96,7 @@ void REPL()
         printf("%s\n",cwd);
       }
     }
-    else if(strcmp("type", argv[0]) == 0)
+    else if((strcmp("type", argv[0]) == 0) && !redirected)
     {
       
       if(!strcmp("echo", argv[1]) || !strcmp("exit", argv[1]) || !strcmp("type", argv[1]) || !strcmp("pwd", argv[1]) || !strcmp("cd", argv[1])) // not operator may seem odd but strcmp returns 0 if true, for if to properly works needs a 1 if true (reason of not)
@@ -100,7 +120,7 @@ void REPL()
     }
     else
     { 
-      executeBin();
+      executeBin(redirectPath, redirected);
     }
     }
   }
