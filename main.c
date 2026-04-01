@@ -3,7 +3,7 @@
 #include <string.h>
 #include <unistd.h>
 
-
+#include "lineEdition.h"
 #include "binariesManager.h"
 #include "arguments.h"
 #include "inputManager.h"
@@ -27,6 +27,9 @@ int main()
 
 void REPL()
 {
+  availableCommands commandsList;
+  fillCommands(&commandsList);
+
   while (true)
   {
     //set up
@@ -39,11 +42,10 @@ void REPL()
     char *stdoutPath = NULL;
     char *stderrPath = NULL;
     //actuall terminal stuff
-    printf("$ ");
+    readLineTab("$ ", &commandsList, userInput, sizeof(userInput));
     //manage input
-    fgets(userInput, 100, stdin);
+   
     sanitizeInput(userInput);
-    //count input
     argumentCounter(userInput, &argumentCount);
     argumentExtractor(userInput, argumentCount);
     
@@ -179,6 +181,7 @@ void REPL()
       executeBin(stdoutPath, stderrPath, redirectedstdout, redirectedstderr, appendStdOut, appendStdErr, argv);
     }
     }
+    commandsFree(&commandsList);
   }
 
 

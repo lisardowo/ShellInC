@@ -6,5 +6,5 @@
 
 char* sanitizeInput(char* userInput);
 
-extern char userInput[120];
+extern char userInput[10000];
 

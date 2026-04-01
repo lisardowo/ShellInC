@@ -1,6 +1,6 @@
 #include "inputManager.h"
 
-char userInput[120];
+char userInput[10000];
 
 char* sanitizeInput(char *userInput)
 {
