@@ -4,9 +4,10 @@
 #include <unistd.h>
 #include <sys/wait.h>
 #include <stdio.h>
+#include <fcntl.h>
 #include "arguments.h"
 
 extern char binPath[100000];
 
 char* getPath(char *command);
-void executeBin(char *redirectPath, bool redirected);
+void executeBin(char *stdoutPath,char *stdErrPath, bool redirectedstdout, bool redirectedStdErr, char *argv[]);

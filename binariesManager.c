@@ -28,33 +28,41 @@ char* getPath(char *command)
   return NULL;
 }
 
-void executeBin(char *redirectPath, bool redirected)
+void executeBin(char *stdoutPath,char *stdErrPath, bool redirectedstdout, bool redirectedStdErr, char *argv[])
 {
-  if(!redirected)
+
+  char* binPath = getPath(argv[0]);
+
+  if (fork() == 0)
   {
-    char* binPath = getPath(argv[0]);
-     
-    if (binPath == NULL)
+    if(redirectedstdout)
     {
-        printf("%s: command not found\n", argv[0]);
+      int fdOut = creat(stdoutPath, 0644);
+      if (fdOut < 0)
+      {
+        _exit(1);
+      }
+      dup2(fdOut, STDOUT_FILENO);
+      close(fdOut);
+
     }
-    else
+  
+    if (redirectedStdErr)
     {
-      if(fork() == 0)
+      int fdError = creat(stdErrPath, 0644);
+      if (fdError < 0)
       {
-
-        execv(binPath, argv); //path , command , arguments 
-                              //null indicates end of arguments                  
+        _exit(1);
       }
-
-      else
-      {
-        wait(NULL);
-      }
+      dup2(fdError, STDERR_FILENO);
+      close(fdError);
     }
+  
+    execv(binPath, argv);
+    _exit(127);
   }
-    else
-    {
-      writeToFile(redirectPath, argv);
-    }
+  else
+  {
+    wait(NULL);
+  }
 }

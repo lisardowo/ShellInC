@@ -8,4 +8,4 @@
 #include <string.h>
 #include <sys/wait.h>
 
-void writeToFile(char *redirectpath, char *argv[]);
+void writeToFile(char *stdoutPath, char *argv[]);

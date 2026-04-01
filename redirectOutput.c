@@ -1,6 +1,6 @@
 #include "redirectOutput.h"
 
-void writeToFile(char *redirectpath, char *argv[])
+void writeToFile(char *stdoutPath, char *argv[])
 {
     int pipeFileDescriptor[2];
     if (pipe(pipeFileDescriptor) == -1)
@@ -27,7 +27,7 @@ void writeToFile(char *redirectpath, char *argv[])
     else
     {
         close(pipeFileDescriptor[1]);
-        int outputFd = open(redirectpath, O_WRONLY | O_CREAT | O_TRUNC, 0644);
+        int outputFd = open(stdoutPath, O_WRONLY | O_CREAT | O_TRUNC, 0644);
         if (outputFd == -1)
         {
             close(pipeFileDescriptor[0]);
