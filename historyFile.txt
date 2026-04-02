@@ -12,3 +12,21 @@ exit
 l jclear
 clear
 exit
+git add .
+git commit -m "cwd in prompt render"
+git push
+clear
+echo hello
+echo adios
+history
+clear
+exit
+testbinaryclear
+clear
+make 
+exit
+clear
+exit
+catnap
+clear
+exit

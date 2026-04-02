@@ -201,8 +201,10 @@ void readLineTab(char *prompt, availableCommands *list, char *out, size_t outSiz
                 {
                     out[len++] = ' ';
                 }
-                out[len] = '\0';
-                redraw(prompt, out , cursorPos);
+                out[outSize - 1] = '\0';
+                len = strlen(out);
+                cursorPos = len;
+                redraw(prompt, out, cursorPos);
             }
             else 
             {
@@ -212,7 +214,9 @@ void readLineTab(char *prompt, availableCommands *list, char *out, size_t outSiz
                 {
                     out[len ++] = matches[0][prefixLen++];
                 }
-                out[len] = '\0';
+                out[outSize - 1] = '\0';
+                len = strlen(out);
+                cursorPos = len;
                 redraw(prompt, out, cursorPos);
 
                 if (tabCount >= 1)
@@ -224,7 +228,7 @@ void readLineTab(char *prompt, availableCommands *list, char *out, size_t outSiz
                     }
                     printf("\n");
                     redraw(prompt, out, cursorPos);
-
+ 
                 
                 }
             }
