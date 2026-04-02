@@ -7,6 +7,7 @@
 #include "binariesManager.h"
 #include "arguments.h"
 #include "inputManager.h"
+#include "getHistory.h"
 
 void REPL();
 char *historyBuffer[10000];
@@ -44,7 +45,7 @@ void REPL()
     //actuall terminal stuff
     readLineTab("$ ", &commandsList, userInput, sizeof(userInput));
     //manage input
-   
+    addHistory(userInput, historyCount, historyBuffer);
     sanitizeInput(userInput);
     argumentCounter(userInput, &argumentCount);
     argumentExtractor(userInput, argumentCount);

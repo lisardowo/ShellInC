@@ -1,6 +1,6 @@
 CC = gcc
 CFLAGS = -Wall -Wextra
-SRC := $(filter-out test/%, $(wildcard src/*.c))
+SRC := $(filter-out test/%, $(wildcard ./*.c))
 OUT = shell
 
 
