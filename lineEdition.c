@@ -238,6 +238,28 @@ void readLineTab(char *prompt, availableCommands *list, char *out, size_t outSiz
         }
         if (c >= 32 && c <= 126)
         {
+            if (c == '\'' || c == '\"')
+            {
+                if (len + 2 < outSize)
+                {
+                    for (size_t i = len + 2 ; i > cursorPos + 1 ; i--)
+                    {
+                        out[i] = out[i - 2];
+                    }
+                    
+                    
+                    out[cursorPos] = c;
+                    out[cursorPos + 1] = c;
+                    len += 2;
+                    cursorPos += 1;
+                    out[len] = '\0';
+
+                    redraw(prompt, out, cursorPos);
+                    
+                }
+                tabCount = 0;
+                continue;
+            }
             if(len + 1 < outSize)
             {
                 if (cursorPos < len)

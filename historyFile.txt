@@ -30,3 +30,20 @@ exit
 catnap
 clear
 exit
+exit  
+out exit
+clear
+exit
+out ""exit
+clear
+exit
+exit"
+daw ""
+clear
+exit
+edaw" ""
+clear
+exit
+dwa ""
+""
+exit
