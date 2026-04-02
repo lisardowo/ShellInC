@@ -1,7 +1,2 @@
-toOctal.c
-toHex.c
-toDec.c
-toBin.c
-src/test/toOctal.c
-toOctal
+src/test/*
 shell
