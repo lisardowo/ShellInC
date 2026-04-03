@@ -82,13 +82,17 @@ void REPL()
     tokens[tok] = NULL;
     operators[op] = NULL;
 
-  for(int i = 0 ; operators[i] != NULL ; i++)
+    int operatorDEBug = 0;
+    int tokenDebug = 0; //TODO
+  for(int i = 0 ; argv[i] != NULL ; i++)
   {
     //echo  >   eas 2>  ead
     //tok0 op0  tok1 op1 tok2
-    if (strcmp(operators[i], ">") == 0 || strcmp(operators[i], "1>") == 0)
+    //ls -lh > test.txt
+    //tok tok op tok
+    if (strcmp(argv[i], ">") == 0 || strcmp(argv[i], "1>") == 0)
       {
-        if (tokens[i + 1] == NULL)
+        if (argv[i + 1] == NULL)
         {
           printf("syntax error: expected file after '>'\n");
           redirectedstdout = false;
@@ -98,12 +102,15 @@ void REPL()
         else
         {
           redirectedstdout = true;
-          stdoutPath = tokens[i + 1];
+          stdoutPath = argv[i + 1];
+          
+          argv[i] = NULL;
+          argv[i + 1] = NULL;
           
         }
          
       }
-      else if (strcmp(operators[i], "2>") == 0)
+      else if (strcmp(argv[i], "2>") == 0)
       {
         if (tokens[i + 1] == NULL)
         {
@@ -116,11 +123,13 @@ void REPL()
         else
         {
           redirectedstderr = true;
-          stderrPath = tokens[i + 1];
+          stderrPath = argv[i + 1];
+          argv[i] = NULL;
+          argv[i + 1] = NULL;
           
         }
       }
-      else if (strcmp(operators[i], ">>") == 0) // appendstdout
+      else if (strcmp(argv[i], ">>") == 0) // appendstdout
       {
         if (tokens[i + 1] == NULL)
         {
@@ -132,11 +141,13 @@ void REPL()
         else
         { 
           appendStdOut = true;
-          stdoutAppendPath = tokens[i + 1];
+          stdoutAppendPath = argv[i + 1];
+          argv[i] = NULL;
+          argv[i + 1] = NULL;
           
         }
       }
-      else if (strcmp(operators[i], "2>>") == 0) // appendstderr
+      else if (strcmp(argv[i], "2>>") == 0) // appendstderr
       {
         if (tokens[i + 1] == NULL)
         {
@@ -147,8 +158,11 @@ void REPL()
         }
         else
         {
-        appendStdErr = true;
-        stderrAppendPath = tokens[i + 1];
+          
+          appendStdErr = true;
+          stderrAppendPath = argv[i + 1];
+          argv[i] = NULL;
+          argv[i + 1] = NULL;
         
         }
         
@@ -233,7 +247,9 @@ void REPL()
     }
     else
     { 
-      executeBin(stdoutPath, stderrPath, stdoutAppendPath, stderrAppendPath, redirectedstdout, redirectedstderr, appendStdOut, appendStdErr, tokens);
+      //for(int i = 0 ; tokens[i] != NULL ; i++)
+      //printf("251 : debug %s\n", argv[i]);;
+      executeBin(stdoutPath, stderrPath, stdoutAppendPath, stderrAppendPath, redirectedstdout, redirectedstderr, appendStdOut, appendStdErr, argv);
     }
     }
     commandsFree(&commandsList);
