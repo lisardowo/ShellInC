@@ -28,7 +28,7 @@ char* getPath(char *command)
   return NULL;
 }
 
-void executeBin(char *stdoutPath,char *stdErrPath, bool redirectedstdout, bool redirectedStdErr, bool appendStdOut, bool appendStdErr, char *argv[])
+int executeBin(char *stdoutPath,char *stdErrPath, bool redirectedstdout, bool redirectedStdErr, bool appendStdOut, bool appendStdErr, char *argv[])
 {
 
   char* binPath = getPath(argv[0]);
@@ -36,6 +36,7 @@ void executeBin(char *stdoutPath,char *stdErrPath, bool redirectedstdout, bool r
   if(binPath == NULL)
   {
     printf("%s: command not found\n", argv[0]);
+    return -1;
   }
 
   if (fork() == 0)
@@ -46,7 +47,7 @@ void executeBin(char *stdoutPath,char *stdErrPath, bool redirectedstdout, bool r
       int fdOut = creat(stdoutPath, 0644);
       if (fdOut < 0)
       {
-        _exit(1);
+        return -1;
       }
       dup2(fdOut, STDOUT_FILENO);
       close(fdOut);
@@ -59,7 +60,7 @@ void executeBin(char *stdoutPath,char *stdErrPath, bool redirectedstdout, bool r
       int fdError = creat(stdErrPath, 0644);
       if (fdError < 0)
       {
-        _exit(1);
+       return -1;
       }
       dup2(fdError, STDERR_FILENO);
       close(fdError);
@@ -70,7 +71,7 @@ void executeBin(char *stdoutPath,char *stdErrPath, bool redirectedstdout, bool r
       int fdOut = open(stdoutPath, O_APPEND | O_CREAT | O_WRONLY, 0644);
       if (fdOut < 0)
       {
-        _exit(1);
+        return -1;
       }
       dup2(fdOut, STDOUT_FILENO);
       close(fdOut);
@@ -82,7 +83,7 @@ void executeBin(char *stdoutPath,char *stdErrPath, bool redirectedstdout, bool r
       int fdOut = open(stdErrPath, O_APPEND | O_CREAT | O_WRONLY, 0644);
       if (fdOut < 0)
       {
-        _exit(1);
+        return -1;
       }
       dup2(fdOut, STDERR_FILENO);
       close(fdOut);
@@ -91,7 +92,7 @@ void executeBin(char *stdoutPath,char *stdErrPath, bool redirectedstdout, bool r
 
   
     execv(binPath, argv);
-    _exit(127);
+    return 0;
   }
   else
   {

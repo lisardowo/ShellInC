@@ -47,3 +47,7 @@ exit
 dwa ""
 ""
 exit
+git add .
+git commit -m "added self completion of quotes"
+git push
+exit

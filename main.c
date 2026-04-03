@@ -208,27 +208,3 @@ void REPL()
   }
 
 
-void createPrompt()
-{
-
-    if (getcwd(prompt, sizeof(prompt)) != NULL)
-    {
-      char *temp[1024];
-      char modifiablePrompt[1024];
-      strncpy(modifiablePrompt, prompt, sizeof(modifiablePrompt)); 
-      modifiablePrompt[sizeof(modifiablePrompt) - 1] = '\0';
-      char *modpromptPtr = strtok(modifiablePrompt, "/");
-      int i = 0;
-      while(modpromptPtr != NULL)
-      {
-
-        temp[i] = modpromptPtr;
-
-        i++;
-        modpromptPtr = strtok(NULL, "/");
-      }
-      snprintf(prompt, sizeof(prompt), "%s/%s $ ", temp[i - 2], temp[i - 1]);
-
-    }
-
-}
