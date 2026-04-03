@@ -8,6 +8,7 @@
 #include "arguments.h"
 #include "inputManager.h"
 #include "getHistory.h"
+#include "utils.h"
 
 void createPrompt();
 void REPL();
@@ -46,6 +47,8 @@ void REPL()
     bool appendStdErr = false;
     char *stdoutPath = NULL;
     char *stderrPath = NULL;
+    char *stdoutAppendPath = NULL;
+    char *stderrAppendPath = NULL;
     //actuall terminal stuff
     readLineTab(prompt, &commandsList, userInput, sizeof(userInput), &historyCount, historyBuffer);
     //manage input
@@ -58,72 +61,101 @@ void REPL()
     {
       continue;
     }
-
-    for (int i = 0 ; argv[i] != NULL ; i++)
+    char *operators[250]; //TODO debug size
+    char *tokens[250]; //TODO debug size
+    int op = 0;
+    int tok = 0;
+  for (int i = 0 ; argv[i] != NULL ; i++)
     {
-      if (strcmp(argv[i], ">") == 0 || strcmp(argv[i], "1>") == 0)
+      
+      if (isOperator(argv[i]))
       {
-        if (argv[i + 1] == NULL)
+          operators[op] = argv[i];
+          op++;
+      }
+      else
+      {
+          tokens[tok] = argv[i];
+          tok++;
+      } 
+    }
+    tokens[tok] = NULL;
+    operators[op] = NULL;
+
+  for(int i = 0 ; operators[i] != NULL ; i++)
+  {
+    //echo  >   eas 2>  ead
+    //tok0 op0  tok1 op1 tok2
+    if (strcmp(operators[i], ">") == 0 || strcmp(operators[i], "1>") == 0)
+      {
+        if (tokens[i + 1] == NULL)
         {
           printf("syntax error: expected file after '>'\n");
           redirectedstdout = false;
           stdoutPath = NULL;
           break ;          
         }
-        redirectedstdout = true;
-        stdoutPath = argv[i + 1];
-        argv[i] = NULL;
-        
-        break; //TODO -> Possibly need to delete this in order to use > and 2> at the same time 
+        else
+        {
+          redirectedstdout = true;
+          stdoutPath = tokens[i + 1];
+          
+        }
+         
       }
-      else if (strcmp(argv[i], "2>") == 0)
+      else if (strcmp(operators[i], "2>") == 0)
       {
-        if (argv[i + 1] == NULL)
+        if (tokens[i + 1] == NULL)
         {
           printf("syntax error: expected file after '>'\n");
           redirectedstderr = false;
           stderrPath = NULL;
           break ;          
+       
         }
-        redirectedstderr = true;
-        stderrPath = argv[i + 1];
-        argv[i] = NULL;
-        
-        break;
+        else
+        {
+          redirectedstderr = true;
+          stderrPath = tokens[i + 1];
+          
+        }
       }
-      else if (strcmp(argv[i], ">>") == 0) // appendstdout
+      else if (strcmp(operators[i], ">>") == 0) // appendstdout
       {
-        if (argv[i + 1] == NULL)
+        if (tokens[i + 1] == NULL)
         {
           printf("syntax error: expected file after '>'\n");
           appendStdOut = false;
-          stdoutPath = NULL;
-          break ;          
+          stdoutAppendPath = NULL;   
+          break;    
         }
-        
-        appendStdOut = true;
-        stdoutPath = argv[i + 1];
-        argv[i] = NULL;
-        
-        break;
+        else
+        { 
+          appendStdOut = true;
+          stdoutAppendPath = tokens[i + 1];
+          
+        }
       }
-      else if (strcmp(argv[i], "2>>") == 0) // appendstderr
+      else if (strcmp(operators[i], "2>>") == 0) // appendstderr
       {
-        if (argv[i + 1] == NULL)
+        if (tokens[i + 1] == NULL)
         {
           printf("syntax error: expected file after '>'\n");
           appendStdErr = false;
-          stderrPath = NULL;
-          break ;          
+          stderrAppendPath = NULL;
+                 
         }
+        else
+        {
         appendStdErr = true;
-        stderrPath = argv[i + 1];
-        argv[i] = NULL;
+        stderrAppendPath = tokens[i + 1];
         
-        break;
+        }
+        
       }
-      
-    }
+      }
+
+
 
     if(strcmp("exit", argv[0]) == 0)
     {
@@ -201,7 +233,7 @@ void REPL()
     }
     else
     { 
-      executeBin(stdoutPath, stderrPath, redirectedstdout, redirectedstderr, appendStdOut, appendStdErr, argv);
+      executeBin(stdoutPath, stderrPath, stdoutAppendPath, stderrAppendPath, redirectedstdout, redirectedstderr, appendStdOut, appendStdErr, tokens);
     }
     }
     commandsFree(&commandsList);

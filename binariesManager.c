@@ -28,7 +28,7 @@ char* getPath(char *command)
   return NULL;
 }
 
-int executeBin(char *stdoutPath,char *stdErrPath, bool redirectedstdout, bool redirectedStdErr, bool appendStdOut, bool appendStdErr, char *argv[])
+int executeBin(char *stdoutPath,char *stdErrPath,char *stdOutAppendPath, char *stdErrAppendPath, bool redirectedstdout, bool redirectedStdErr, bool appendStdOut, bool appendStdErr, char *tokens[])
 {
 
   char* binPath = getPath(argv[0]);
@@ -91,11 +91,12 @@ int executeBin(char *stdoutPath,char *stdErrPath, bool redirectedstdout, bool re
     }
 
   
-    execv(binPath, argv);
+    execv(binPath, tokens);
     return 0;
   }
   else
   {
     wait(NULL);
   }
+  return 0 ;
 }
