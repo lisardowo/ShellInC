@@ -1,0 +1,165 @@
+{
+    "stage1": {
+        "commands" : ["echo hello",
+                     "echo hello world",
+                     "type echo",
+                     "type ls",
+                     "invalid_command_xyz",
+                     "exit 0"
+                    ],
+        "expectedOut" : ["hello",
+                         "hello world",
+                         "echo is a shell builtin",
+                         "ls is usr/bin/ls",
+                         "invalid_command_xyz: command not found",
+                         "No output, shell should exit cleanly"
+                         
+                        ]
+
+    },
+    "stage2": {
+        "commands" : ["pwd",
+                     "cd NONEXISTENTDIR",
+                     "pwd",
+                     "cd ",
+                     "pwd"
+                    ],
+        "expectedOut" : ["/home/<YOURUSER>/<PATH>/src",
+                         "cd: NONEXISTENTDIR: No such file or directory",
+                         "/home/<YOURUSER>/PATH/src",
+                         "No output, shall change to HOME",
+                         "/home/<YOURUSER>/"
+                        ]
+    },
+    "stage3": {
+        "commands" : ["echo 'hello world'",
+                     "echo \"hello world\" ",
+                     "echo one\two",
+                     "echo \"a\"b\"",
+                     "echo 'a\b'",
+                     "\"echo\" \"quoted executable\""
+                    ],
+        "expectedOut" : ["hello world",
+                         "hello world",
+                         "onetwo",
+                         "ab",
+                         "a\b",
+                         "quoted executable"
+                        ]
+    },
+    "stage4": {
+        "commands" : ["echo hello > out.txt",
+                     "cat out.txt",
+                     "ls /non-existent 2> err.txt",
+                     "cat err.txt",
+                     "echo linea1 >> out.txt",
+                     "echo linea2 >> out.txt"
+                    ],
+        "expectedOut" : ["No outpu, shall create a file called out.txt",
+                         "hello world",
+                         "echo is a shell builtin",
+                         "usr/bin/ls",
+                         "invalid_command_xyz: command not found",
+                         "No output, shell should exit cleanly"
+                        ]
+    },
+    "stage5": {
+        "commands" : ["ty+TAB",
+                     "ec+TAB",
+                     "ls /u+TAB",
+                     "echo a+TAB",
+                     "zz+TAB",
+                     "ex+TAB"
+                    ],
+        "expectedOut" : ["hello",
+                         "hello world",
+                         "echo is a shell builtin",
+                         "usr/bin/ls",
+                         "invalid_command_xyz: command not found",
+                         "No output, shell should exit cleanly"
+                        ]
+    },
+    "stage6": {
+        "commands" : ["cat te+TAB",
+                     "cat src/ma+TAB",
+                     "cd sr+TAB",
+                     "cat src/test/te+TAB",
+                     "cat src/no+TAB",
+                     "cat ./s+TAB"
+                    ],
+        "expectedOut" : ["hello",
+                         "hello world",
+                         "echo is a shell builtin",
+                         "usr/bin/ls",
+                         "invalid_command_xyz: command not found",
+                         "No output, shell should exit cleanly"
+                        ]
+    },
+    "stage7": {
+        "commands" : ["sleep 1 &",
+                     "jobs",
+                     "sleep 2 &",
+                     "jobs",
+                     "sleep 1",
+                     "jobs"
+                    ],
+        "expectedOut" : ["hello",
+                         "hello world",
+                         "echo is a shell builtin",
+                         "usr/bin/ls",
+                         "invalid_command_xyz: command not found",
+                         "No output, shell should exit cleanly"
+                        ]
+    },
+    "stage8": {
+        "commands" : ["echo hello | cat",
+                     "printf \"a\nb\n\" | wc -l",
+                     "echo echo | re a-z A-Z",
+                     "printf \"x\ny\nz\n\" | grep y",
+                     "echo test | rev",
+                     "printf \"1\n2\n3\n\" | tail -n 1"
+                    ],
+        "expectedOut" : ["hello",
+                         "hello world",
+                         "echo is a shell builtin",
+                         "usr/bin/ls",
+                         "invalid_command_xyz: command not found",
+                         "No output, shell should exit cleanly"
+                        ]
+    },
+    "stage9": {
+        "commands" : ["echo cmd1",
+                     "echo cmd2",
+                     "history",
+                     "history 1",
+                     "!1",
+                     "history"
+                    ],
+        "expectedOut" : ["hello",
+                         "hello world",
+                         "echo is a shell builtin",
+                         "usr/bin/ls",
+                         "invalid_command_xyz: command not found",
+                         "No output, shell should exit cleanly"
+                        ]
+    },
+    "stage10": {
+        "commands" : {"session1":  ["echo persist1",
+                     "echo persist2",
+                     "history",
+                     "exit"
+                    ],
+                    "session2" : ["history",
+                     "echo persist3",
+                     "exit"
+                    ]
+                },
+        "expectedOut" : ["hello",
+                         "hello world",
+                         "echo is a shell builtin",
+                         "usr/bin/ls",
+                         "invalid_command_xyz: command not found",
+                         "No output, shell should exit cleanly"
+                        ]
+    }
+}

@@ -132,7 +132,7 @@ void argumentExtractor(char *userInput, int argumentCount)
       }
 
   }
-  argv[argIndex] = NULL;
+  argv[argIndex] = NULL; // for vulnerable version, change this null for a fixed last element indicator string
 }
 
 

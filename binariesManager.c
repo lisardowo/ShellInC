@@ -30,7 +30,7 @@ char* getPath(char *command)
 
 int executeBin(char *stdoutPath,char *stdErrPath,char *stdOutAppendPath, char *stdErrAppendPath, bool redirectedstdout, bool redirectedStdErr, bool appendStdOut, bool appendStdErr, char *tokens[])
 {
-  //printf("in Bin");
+  
   char* binPath = getPath(argv[0]);
 
   if(binPath == NULL)
@@ -43,7 +43,7 @@ int executeBin(char *stdoutPath,char *stdErrPath,char *stdOutAppendPath, char *s
   {
     if(redirectedstdout)
     {
-      printf("%s", stdoutPath);
+      
       int fdOut = creat(stdoutPath, 0644);
       if (fdOut < 0)
       {
@@ -64,7 +64,7 @@ int executeBin(char *stdoutPath,char *stdErrPath,char *stdOutAppendPath, char *s
       }
       dup2(fdError, STDERR_FILENO);
       close(fdError);
-      
+
     }
 
     if(appendStdOut)

@@ -45,6 +45,7 @@ void REPL()
     bool redirectedstderr = false;
     bool appendStdOut = false;
     bool appendStdErr = false;
+    bool andOperator = false;
     char *stdoutPath = NULL;
     char *stderrPath = NULL;
     char *stdoutAppendPath = NULL;
@@ -61,29 +62,11 @@ void REPL()
     {
       continue;
     }
-    char *operators[250]; //TODO debug size
-    char *tokens[250]; //TODO debug size
-    int op = 0;
-    int tok = 0;
-  for (int i = 0 ; argv[i] != NULL ; i++)
-    {
-      
-      if (isOperator(argv[i]))
-      {
-          operators[op] = argv[i];
-          op++;
-      }
-      else
-      {
-          tokens[tok] = argv[i];
-          tok++;
-      } 
-    }
-    tokens[tok] = NULL;
-    operators[op] = NULL;
 
-    int operatorDEBug = 0;
-    int tokenDebug = 0; //TODO
+char *commandToken[1000];
+int commandCount = 0;
+ 
+//TODO from 64 to 83 are probablly gon be erased
   for(int i = 0 ; argv[i] != NULL ; i++)
   {
     //echo  >   eas 2>  ead
@@ -102,13 +85,12 @@ void REPL()
         }
         else
         {
+
           redirectedstdout = true;
           stdoutPath = argv[i + 1];
-          
-          argv[i + 1] = NULL;
-          argv[i] = NULL;
-          
-          
+
+          i++;
+          continue;
         }
          
       }
@@ -116,6 +98,7 @@ void REPL()
       {
         if (argv[i + 1] == NULL)
         {
+          
           printf("syntax error: expected file after '2>'\n");
           redirectedstderr = false;
           stderrPath = NULL;
@@ -127,11 +110,9 @@ void REPL()
         
           redirectedstderr = true;
           stderrPath = argv[i + 1];
-          
-          argv[i + 1] = NULL;
-          argv[i] = NULL;
-          
-          
+          i++;
+          continue;
+
         }
       }
       else if (strcmp(argv[i], ">>") == 0) // appendstdout
@@ -145,12 +126,12 @@ void REPL()
         }
         else
         { 
+
           appendStdOut = true;
           stdoutAppendPath = argv[i + 1];
-          
-          argv[i] = NULL;
-          argv[i + 1] = NULL;
-          
+          i++;
+          continue;
+
         }
       }
       else if (strcmp(argv[i], "2>>") == 0) // appendstderr
@@ -167,25 +148,47 @@ void REPL()
           
           appendStdErr = true;
           stderrAppendPath = argv[i + 1];
-          
-          argv[i] = NULL;
-          argv[i + 1] = NULL;
+          i++;
+          continue;
         
         }
         
       }
+      
+
+       else if (strcmp(argv[i], "&&") == 0)
+      {
+        if (argv[i + 1] == NULL)
+        {
+          printf("Esto deberia dejar escribir en multiples lineas");
+          
+                 
+        }
+        else
+        {
+          
+          andOperator = true;
+          
+
+        }
+        
       }
 
+      commandToken[commandCount++] = argv[i];
+
+}
+
+commandToken[commandCount] = NULL ;
 
 
-    if(strcmp("exit", argv[0]) == 0)
+    if(strcmp("exit", commandToken[0]) == 0)
     {
 
       dumpHistory(historyBuffer);
       break;
 
     }
-    else if((strcmp("echo", argv[0]) == 0) && !redirectedstdout && !appendStdOut)
+    else if((strcmp("echo", commandToken[0]) == 0) && !redirectedstdout && !appendStdOut)
     {
       for(int i = 1 ; argv[i] != NULL ; i++)
       {
@@ -196,7 +199,7 @@ void REPL()
     else if(strcmp("cd", argv[0]) == 0)
     {
 
-      if(argv[1] == NULL || strcmp("~", argv[1]) == 0)
+      if(commandToken[1] == NULL || strcmp("~", commandToken[1]) == 0)
       {
         
         char *home = getenv("HOME");
@@ -205,10 +208,10 @@ void REPL()
       }
       else if ((chdir(argv[1])) != 0)
       {
-        printf("%s: %s: No such file or directory\n", argv[0], argv[1]);
+        printf("%s: %s: No such file or directory\n", commandToken[0], commandToken[1]);
       }
     }
-    else if((strcmp("pwd", argv[0]) == 0) && !redirectedstdout && !appendStdOut)
+    else if((strcmp("pwd", commandToken[0]) == 0) && !redirectedstdout && !appendStdOut)
     {
       char cwd[1024];
       if(getcwd(cwd, sizeof(cwd)))
@@ -216,7 +219,7 @@ void REPL()
         printf("%s\n",cwd);
       }
     }
-    else if((strcmp("history", argv[0]) == 0) && !redirectedstdout && !appendStdOut)
+    else if((strcmp("history", commandToken[0]) == 0) && !redirectedstdout && !appendStdOut)
     {
       
       for (int i = 0 ; historyBuffer[i] != NULL ; i++)
@@ -225,29 +228,29 @@ void REPL()
       } 
 
     }
-    else if((strcmp("type", argv[0]) == 0) && !redirectedstdout && !appendStdOut)
+    else if((strcmp("type", commandToken[0]) == 0) && !redirectedstdout && !appendStdOut)
     { 
 
-      if (argv[1] == NULL)
+      if (commandToken[1] == NULL)
       {
         printf("Usage : type <command>");
       }
 
-      if(!strcmp("echo", argv[1]) || !strcmp("exit", argv[1]) || !strcmp("type", argv[1]) || !strcmp("pwd", argv[1]) || !strcmp("cd", argv[1]) || !strcmp("history", argv[1])) // not operator may seem odd but strcmp returns 0 if true, for if to properly works needs a 1 if true (reason of not)
+      if(!strcmp("echo", commandToken[1]) || !strcmp("exit", commandToken[1]) || !strcmp("type", commandToken[1]) || !strcmp("pwd", commandToken[1]) || !strcmp("cd", commandToken[1]) || !strcmp("history", commandToken[1])) // not operator may seem odd but strcmp returns 0 if true, for if to properly works needs a 1 if true (reason of not)
       {
         printf("%s is a shell builtin\n", argv[1]);
       }
       else
       {
         
-        char* path = getPath(argv[1]);
+        char* path = getPath(commandToken[1]);
         if (path != NULL)
         {
-          printf("%s is %s\n",argv[1], path);
+          printf("%s is %s\n",commandToken[1], commandToken);
         }
         else
         {
-          printf("%s: not found\n", argv[1]);
+          printf("%s: not found\n", commandToken[1]);
         }
       }
       
@@ -255,7 +258,7 @@ void REPL()
     else
     { 
 
-      executeBin(stdoutPath, stderrPath, stdoutAppendPath, stderrAppendPath, redirectedstdout, redirectedstderr, appendStdOut, appendStdErr, argv);
+      executeBin(stdoutPath, stderrPath, stdoutAppendPath, stderrAppendPath, redirectedstdout, redirectedstderr, appendStdOut, appendStdErr, commandToken);
     
     }
     }
