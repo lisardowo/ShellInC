@@ -48,35 +48,29 @@
                         ]
     },
     "stage4": {
-        "commands" : ["echo hello > out.txt",
+        "commands" : ["echo hello world > out.txt",
                      "cat out.txt",
                      "ls /non-existent 2> err.txt",
                      "cat err.txt",
                      "echo linea1 >> out.txt",
-                     "echo linea2 >> out.txt"
+                     "cat out.txt"
                     ],
-        "expectedOut" : ["No outpu, shall create a file called out.txt",
+        "expectedOut" : ["No output, shall create a file called out.txt",
                          "hello world",
-                         "echo is a shell builtin",
-                         "usr/bin/ls",
+                         "No output, shall create a file called err.txt",
+                         "ls: cannot access '/non-existent': No such file or directory",
                          "invalid_command_xyz: command not found",
-                         "No output, shell should exit cleanly"
+                         "hello world \n linea1"
                         ]
     },
     "stage5": {
         "commands" : ["ty+TAB",
-                     "ec+TAB",
-                     "ls /u+TAB",
-                     "echo a+TAB",
-                     "zz+TAB",
-                     "ex+TAB"
+                     "ech+TAB",
+                     "mkdi+TAB"
                     ],
-        "expectedOut" : ["hello",
-                         "hello world",
-                         "echo is a shell builtin",
-                         "usr/bin/ls",
-                         "invalid_command_xyz: command not found",
-                         "No output, shell should exit cleanly"
+        "expectedOut" : ["self complete to type",
+                         "self complete to echo",
+                         "self complete to mkdir"
                         ]
     },
     "stage6": {
@@ -130,17 +124,11 @@
     "stage9": {
         "commands" : ["echo cmd1",
                      "echo cmd2",
-                     "history",
-                     "history 1",
-                     "!1",
                      "history"
                     ],
-        "expectedOut" : ["hello",
-                         "hello world",
-                         "echo is a shell builtin",
-                         "usr/bin/ls",
-                         "invalid_command_xyz: command not found",
-                         "No output, shell should exit cleanly"
+        "expectedOut" : ["cmd1",
+                         "cmd2",
+                         "most recent shall be: echo cmd1, echo cmd2"
                         ]
     },
     "stage10": {
@@ -151,15 +139,20 @@
                     ],
                     "session2" : ["history",
                      "echo persist3",
+                     "history",
                      "exit"
                     ]
                 },
-        "expectedOut" : ["hello",
-                         "hello world",
-                         "echo is a shell builtin",
-                         "usr/bin/ls",
-                         "invalid_command_xyz: command not found",
-                         "No output, shell should exit cleanly"
-                        ]
+        "expectedOut" : {"session1":  ["persist1",
+                     "persist2",
+                     "most recent commands shall be persist1, persist2",
+                     "no output, shall exit cleanly"
+                    ],
+                    "session2" : ["most recent commands shall be: history, exit, persist1, persist2",
+                     "echo persist3",
+                     "history most recent command shall be persist3",
+                     "exit"
+                    ]
+                }
     }
 }
