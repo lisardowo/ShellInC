@@ -117,8 +117,26 @@ int type(char **current, bool redirectedstdout, bool redirectedstderr, bool appe
     return 1; 
 }
 
-int history(char *historyBuffer[])
+int history(char *historyBuffer[], bool redirectedstdout, bool appendStdOut,  char *stdoutPath, char *stdoutAppendPath)
 {
+    if (redirectedstdout)
+    {
+        int fd = getFileDescriptor(redirectedstdout , O_CREAT | O_WRONLY | O_TRUNC);
+        for(int i = 0 ; historyBuffer[i] != NULL ; i++)
+        {
+            dprintf(fd, "%d %s\n", i + 1, historyBuffer[i]);
+        }
+        return 0;
+    }
+    if (appendStdOut)
+    {
+        int fd = getFileDescriptor(stdoutAppendPath , O_CREAT | O_WRONLY | O_APPEND);
+        for(int i = 0 ; historyBuffer[i] != NULL ; i++)
+        {
+            dprintf(fd, "%d %s\n", i + 1, historyBuffer[i]);
+        }
+        return 0;
+    }
     
     for(int i = 0 ; historyBuffer[i] != NULL ; i++)
       {
@@ -127,11 +145,24 @@ int history(char *historyBuffer[])
     return 0;
 }
 
-int pwd()
+int pwd( bool redirectedstdout, bool appendStdOut, char *stdoutPath,  char *stdoutAppendPath)
 {
     char cwd[1024];
       if (getcwd(cwd, sizeof(cwd)))
       {
+        if (redirectedstdout)
+        {
+            int fd = getFileDescriptor(stdoutAppendPath, O_CREAT | O_TRUNC | O_WRONLY);
+            dprintf(fd, "%s\n",cwd);
+            return 0;
+        }
+
+        if (appendStdOut)
+        {
+            int fd = getFileDescriptor(stdoutAppendPath, O_CREAT | O_APPEND | O_WRONLY);
+            dprintf(fd, "%s\n",cwd);
+            return 0;
+        }
         printf("%s\n",cwd);
         return 0;
       }
@@ -141,7 +172,7 @@ int pwd()
       }
 }
 
-int cd(char **current)
+int cd(char **current, bool redirectedstderr, bool appendStdErr, char *stderrPath, char *stderrAppendPath)
 {
      if (current[1] == NULL || strcmp ("~", current[1]) == 0 )
       {
@@ -152,8 +183,24 @@ int cd(char **current)
       {
         if (chdir(current[1]) != 0)
         {
+          if (redirectedstderr)
+          {
+            int fd = getFileDescriptor(stderrPath, O_CREAT | O_WRONLY | O_TRUNC);
+            dprintf("%s: no such file or directory : \"%s\" \n", current[0], current[1]);
+            return 1;
+
+          } 
+
+          if (appendStdErr)
+          {
+            int fd = getFileDescriptor(stderrAppendPath , O_CREAT | O_WRONLY | O_APPEND);
+            dprintf(fd, "%s: no such file or directory : \"%s\" \n", current[0], current[1]);
+            return 1;
+          } 
+                    
           printf("%s: no such file or directory : \"%s\" \n", current[0], current[1]);
           return 1;
+
         }
         else
         {
@@ -162,10 +209,34 @@ int cd(char **current)
       }
 }
 
-int echo(char **current)
+int echo(char **current, bool redirectedstdout, bool redirectedstderr, bool appendStdOut, bool appendStdErr, char *stdoutPath, char *stderrPath, char *stdoutAppendPath, char *stderrAppendPath)
 {
-    
+    if (redirectedstdout)
+    {
+     int fd = getFileDescriptor(stdoutPath , O_WRONLY | O_TRUNC | O_CREAT);
      for (int i = 1 ; current[i] != NULL ; i++)
+      {
+        dprintf(fd,"%s ", current[i]);
+      }
+      dprintf(fd, "\n");
+      return 0;
+
+    }
+
+    if (appendStdOut)
+    {
+    
+        int fd = getFileDescriptor(appendStdOut , O_WRONLY | O_APPEND | O_CREAT);
+        for (int i = 1 ; current[i] != NULL ; i++)
+        {
+            dprintf(fd,"%s ", current[i]);
+        }
+        dprintf(fd, "\n");
+        return 0;
+        
+    }
+
+    for (int i = 1 ; current[i] != NULL ; i++)
       {
         printf("%s ", current[i]);
       }

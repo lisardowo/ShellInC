@@ -4,6 +4,7 @@
 #include <stdbool.h>
 #include "builtIn.h"
 #include "utils.h"
+#include "binariesManager.h"
 
 int reddirectInChild(bool redirectedStdOut, bool redirectedStdErr, bool appendStdOuut, bool appendStdErr,char *stdOutPath, char *stdErrPath, char *stdoutAppendPath, char *stderrAppendPath)
 {
@@ -100,7 +101,14 @@ int runBuiltinChild(char **current, char **historyBuffer)
     return 1;
 }
 
-int externalInChild()
+int externalInChild(char **current, char *stderr)
 {
-    
+    char *binPath = getPath(current[0]);
+    if (binPath == NULL)
+    {
+        fprintf(stderr, "%s command not found\n", current[0] ); //TODO have a feeling that this snippet gon be bugged
+        return 1;
+    }
+    execv(binPath, current);
+    return 0;
 }
