@@ -1,4 +1,3 @@
-
 #include "pipeline.h"
 
 int reddirectInChild(bool redirectedStdOut, bool redirectedStdErr, bool appendStdOuut, bool appendStdErr,char *stdOutPath, char *stdErrPath, char *stdoutAppendPath, char *stderrAppendPath)
@@ -107,7 +106,7 @@ int externalInChild(char **current, bool redirectedStdErr, bool appendStdErr, ch
             int fd = getFileDescriptor(stdErrPath, O_TRUNC | O_CREAT | O_WRONLY);
             dprintf(fd, "%s command not found\n", current[0] ); //TODO have a feeling that this snippet gon be bugged
             close(fd);
-            return 1;
+
         }
 
         if(appendStdErr)
@@ -115,115 +114,112 @@ int externalInChild(char **current, bool redirectedStdErr, bool appendStdErr, ch
             int fd = getFileDescriptor(stdErrAppendPath, O_APPEND | O_CREAT | O_WRONLY);
             dprintf(fd, "%s command not found\n", current[0] ); //TODO have a feeling that this snippet gon be bugged
             close(fd);
-            return 1;
-        }
 
+        }
+        else
+        {
         dprintf(STDERR_FILENO, "%s command not found\n", current[0] ); //TODO have a feeling that this snippet gon be bugged
-        return 1;
+        }
+        return 127;
     }
     execv(binPath, current);
-    return 0;
+    return 126;
 }
 
-int runPipeline(char *commands[100][100], int commandCount ,char **historyBuffer, bool redirectedstdout, bool redirectedstderr, bool appendStdOut, bool appendStdErr, char *stdoutPath, char *stderrPath, char *stdoutAppendPath, char *stderrAppendPath)
+int runPipeline(char *commands[100][100], int commandCount, char **historyBuffer, bool redirectedstdout, bool redirectedstderr, bool appendStdOut, bool appendStdErr, char *stdoutPath, char *stderrPath, char *stdoutAppendPath, char *stderrAppendPath)
 {
-    int prevFd = -1;
+    int prev_pipe_read_end = -1;
     pid_t pids[100];
-    int pidCount = 0;
-    pid_t lastPid = -1;
+    int pid_count = 0;
 
-    for (int i = 0 ; i < commandCount ; i++)
+    for (int i = 0; i < commandCount; i++)
     {
-        int fds[2] = {initializerValues , initializerValues};
-        bool isLast = (i == commandCount - 1);
-        
-        if (!isLast && pipe(fds) == -1)
+        int fds[2] = {-1, -1};
+        bool is_last_command = (i == commandCount - 1);
+
+        if (!is_last_command)
         {
-            return 1;
+            if (pipe(fds) == -1)
+            {
+                return 1;
+            }
         }
 
         pid_t pid = fork();
-        if(pid == -1 )
+        if (pid == -1)
         {
             return 1;
         }
 
         if (pid == 0)
         {
-            if (prevFd != -1)
+        
+            if (prev_pipe_read_end != -1)
             {
-                dup2(prevFd, STDIN_FILENO);
-                close(prevFd);
+                dup2(prev_pipe_read_end, STDIN_FILENO);
+                close(prev_pipe_read_end);
             }
 
-            if(!isLast)
+            if (!is_last_command)
             {
+               
+                close(fds[0]); 
                 dup2(fds[1], STDOUT_FILENO);
-                close(fds[0]);
                 close(fds[1]);
             }
-            else 
-            { 
-                if (reddirectInChild(redirectedstdout, redirectedstderr, appendStdOut, appendStdErr, stdoutPath, stderrPath, stdoutAppendPath, stderrAppendPath))
+            else
+            {
+            
+                if (reddirectInChild(redirectedstdout, redirectedstderr, appendStdOut, appendStdErr, stdoutPath, stderrPath, stdoutAppendPath, stderrAppendPath) != 0)
                 {
-                    _exit(1);
+                    _exit(1); 
                 }
             }
-       /*     if (prevFd != -1) 
-            {
-                close(prevFd);
-            }
-            if (fds[0] != -1)
-            {
-                close(fds[0]);
-            }
-            if (fds[1] != -1) 
-            {
-                close(fds[1]);
-            }*/
-
-            int status = runBuiltinChild(commands[i],historyBuffer, redirectedstdout, redirectedstderr, appendStdOut, appendStdErr, stdoutPath, stderrPath, stdoutAppendPath, stderrAppendPath);
-
-            if (status == 1)
-            {
-                status = externalInChild(commands[i], redirectedstderr, appendStdErr, stderrPath, stderrAppendPath);
-                _exit(status);
-            }
-        }
-
-        pids[pidCount++] = pid;
-        lastPid = pid;
-
-        if(!isLast)
-        {
-            close(fds[1]);
             
+            int status = runBuiltinChild(commands[i], historyBuffer, redirectedstdout, redirectedstderr, appendStdOut, appendStdErr, stdoutPath, stderrPath, stdoutAppendPath, stderrAppendPath);
+            if (status == 1)
+            { 
+                status = externalInChild(commands[i], redirectedstderr, appendStdErr, stderrPath, stderrAppendPath);
+            }
+            _exit(status); 
         }
-
-        if (prevFd != -1)
-        { 
-            close(prevFd);
-        }
-        
-        if (!isLast) 
+        else
         {
-            prevFd = fds[0];
-        }
         
+            pids[pid_count++] = pid;
 
-    }    
-
-    int lastStatus = 0 ;
-
-    for (int  i = 0 ; i < pidCount ; i++)
-    {
-        int wstatus = 0;
-        waitpid(pids[i], &wstatus, 0);
-        if (pids[i] == lastPid)
-        {
-            if (WIFEXITED(wstatus)) lastStatus = WEXITSTATUS(wstatus);
-            else lastStatus = 1;
+            if (prev_pipe_read_end != -1)
+            {
+                close(prev_pipe_read_end);
+            }
+    
+            if (!is_last_command)
+            {
+                close(fds[1]); 
+                prev_pipe_read_end = fds[0];
+            }
         }
     }
-    return lastStatus;
+
+  
+    int last_status = 0;
+    for (int i = 0; i < pid_count; i++)
+    {
+        int wstatus;
+        waitpid(pids[i], &wstatus, 0);
+        
+        if (i == pid_count - 1)
+        {
+            if (WIFEXITED(wstatus))
+            {
+                last_status = WEXITSTATUS(wstatus);
+            }
+            else
+            {
+                last_status = 1; 
+            }
+        }
+    }
+
+    return last_status;
 }

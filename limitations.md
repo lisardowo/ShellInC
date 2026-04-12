@@ -1,0 +1,4 @@
+here imma put some limitations i found that im not ready to properly document in readme
+TODO doccument : when running following command: "echo hola | grep hola && echo succes > ok.txt" expected output is hola to terminal and "succes" written to ok.txt file, this dont work as inteended and instead writes nothign to terminal an sends "hola" to the file. It seems to be something related to parsing and the fact that the values that take care of redirection are left stuck and dont really know what to redirect.. yeah is pretty stupid
+
+Ive read that modern shells use AST that is something im not willing to fight with (again)

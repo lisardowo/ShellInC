@@ -293,7 +293,7 @@ void REPL()
     
     if (v > 0)
     {
-      if (prevConditional == AND && lastStatus == 0)
+      if (prevConditional == AND && lastStatus != 0)
       {
         prevConditional = pipeLineConditionals[v];
         continue;
