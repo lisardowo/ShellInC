@@ -25,9 +25,9 @@ void addHistory(char *command, int *historyCount, char *historyBuffer[])
 
 void dumpHistory(char *historyBuffer[])
 {
-
-    int historyFd = getFileDescriptor("historyFile.txt", O_CREAT | O_TRUNC | O_WRONLY);
     
+    int historyFd = getFileDescriptor("historyFile.txt", O_CREAT | O_TRUNC | O_WRONLY);
+
     for(int i = 0 ; historyBuffer[i] != NULL ; i++)
     {
         dprintf(historyFd, "%s\n", historyBuffer[i]);
@@ -86,5 +86,25 @@ void getHistory(int *historyCount, char *historyBuffer[])
     historyBuffer[*historyCount] = NULL;
     
     
+}
+
+bool expandHistory(char *userInput[], int historyCount, char *historyBuffer[])
+{
+     for (int v = 0 ; userInput[v] != NULL ; v++)
+    {
+        if(userInput[v] == '!')
+        {
+            printf("yup\n");
+        }
+    }
+
+    for (int i = 0 ; userInput[i] != NULL ; i++){
+    char tempBuffer[10000];
+    int tempPosition = 0;
+    bool isExpandible = false;
+    char *currentToken = historyBuffer[i];
+
+   
+}
 }
 

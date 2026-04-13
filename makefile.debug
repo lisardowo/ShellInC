@@ -1,0 +1,14 @@
+CC = gcc
+CFLAGS = -Wall -Wextra
+SRC := $(filter-out test/%, $(wildcard ./*.c))
+OUT = shell
+
+
+
+all: $(OUT)
+
+$(OUT): $(SRC)
+	$(CC) $(CFLAGS) $(SRC) -g -o $(OUT)
+
+clean:
+	rm -f $(OUT)

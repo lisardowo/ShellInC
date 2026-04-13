@@ -6,7 +6,9 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <unistd.h>
+#include <stdbool.h>
 
 void addHistory(char *command, int *historyCount, char *historyBuffer[]);
 void dumpHistory(char *historyBuffer[]);
 void getHistory(int *historyCount, char *historyBuffer[]);
+bool expandHistory(char *userInput[], int historyCount, char *historyBuffer[]);

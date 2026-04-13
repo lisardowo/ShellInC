@@ -4,7 +4,7 @@
 #include "quotationParser.h"
 
 static char argvStorage[10000];
-char *argv[100];
+char *argv[1000];
 
 void argumentExtractor(char *userInput, int argumentCount)
 {

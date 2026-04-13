@@ -13,6 +13,7 @@
 #include "builtIn.h"
 #include "signalsManager.h"
 #include "expansion.h"
+#include "globbing.h"
 
 void createPrompt();
 void REPL();
@@ -84,6 +85,8 @@ void REPL()
     argumentExtractor(userInput, argumentCount);
 
     expandArguments(argv);
+    expandGlobs(argv);
+    expandHistory(argv , historyCount, historyBuffer);
 
     char *segments[100][100];
     segmentType typeOfSegment[100];
