@@ -310,7 +310,7 @@ int jobs(job *jobList,bool redirectedstdout, bool appendStdOut, char *stdoutPath
         {
             if (jobList[i].running)
             {
-                dprintf(fd, "[%d]    Running         %s\n", jobList->id, jobList->command);
+                dprintf(fd, "[%d]    Running         %s\n", jobList[i].id, jobList[i].command);
             }
     
         }
@@ -328,7 +328,7 @@ int jobs(job *jobList,bool redirectedstdout, bool appendStdOut, char *stdoutPath
         {
             if (jobList[i].running)
             {
-                dprintf(fd, "[%d]    Running         %s\n", jobList->id, jobList->command);
+                dprintf(fd, "[%d]    Running         %s\n", jobList[i].id, jobList[i].command);
             }
     
         }
@@ -342,7 +342,7 @@ int jobs(job *jobList,bool redirectedstdout, bool appendStdOut, char *stdoutPath
     {
         if (jobList[i].running)
         {
-            printf("[%d]    Running         %s\n", jobList->id, jobList->command);
+            printf("[%d]    Running         %s\n", jobList[i].id, jobList[i].command);
         }
     
     }
