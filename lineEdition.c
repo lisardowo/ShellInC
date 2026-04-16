@@ -31,15 +31,37 @@ void redraw(char *prompt, char *buf, size_t cursorPos)
     fflush(stdout);
 }
 
-void firstToken(char *buf, char *out, size_t outSize)
+void getLastToken(char *buf, size_t cursorPos, char *out, size_t outSize)
 {
-    size_t i = 0 ;
-    while (buf[i] != '\0' && buf[i] != ' ' && i + 1 < outSize)
+
+    int start = cursorPos - 1;
+    while (start >= 0 && buf[start] != ' ')
     {
-        out[i] = buf[i];
-        i ++;
+        start --;
+    }
+    start++;
+
+    size_t i = 0;
+    while(start < (int)cursorPos && i + 1 < outSize)
+    {
+        out[i++] = buf[start++];
     }
     out[i] = '\0';
+
+}
+
+bool isFirstToken(char *buf, size_t cursorPos)
+{
+    int start = cursorPos - 1;
+    while (start >= 0)
+    {
+        if(buf[start] == ' ')
+        {
+            return false;
+        }
+        start--;
+    }
+    return true;
 }
 
 void readLineTab(char *prompt, availableCommands *list, char *out, size_t outSize,int *historyCount, char *historyBuffer[])
@@ -179,11 +201,20 @@ void readLineTab(char *prompt, availableCommands *list, char *out, size_t outSiz
 
         if (c == '\t')
         {
-            char prefix[256];
-            firstToken(out, prefix, sizeof(prefix));
+            char currentWord[256];
+            getLastToken(out, cursorPos, currentWord, sizeof(currentWord));
 
             char **matches = NULL;
-            size_t matchesSize = prefixMatches(list,prefix, &matches);
+            size_t matchesSize = 0;
+
+            if (isFirstToken(out, cursorPos))
+            {
+                matchesSize = prefixMatches(list, currentWord, &matches);
+            }
+            else
+            {
+                matchesSize = fileMatches(currentWord, &matches);
+            }
 
             if (matchesSize == 0)
             {
@@ -191,49 +222,58 @@ void readLineTab(char *prompt, availableCommands *list, char *out, size_t outSiz
             }
             else if (matchesSize == 1)
             {
-                size_t v = strlen(prefix);
+                size_t v = strlen(currentWord);
                 char *full = matches[0];
-                while (full[v] != '\0' && len + 1 < outSize)
+                while (full[v] != '\0' && (len + 1 < outSize))
                 {
-                    out[len ++] = full[v++];
+                    out[len++] = full[v++];
                 }
-                if(len + 1 < outSize)
+
+                if (len + 1 < outSize && full[strlen(full) - 1] != '/')
                 {
                     out[len++] = ' ';
                 }
+
                 out[outSize - 1] = '\0';
                 len = strlen(out);
                 cursorPos = len;
                 redraw(prompt, out, cursorPos);
             }
-            else 
+            else
             {
                 size_t lcp = lengestCommonPrefix(matches, matchesSize);
-                size_t prefixLen = strlen(prefix);
-                while (prefixLen < lcp && len + 1 < outSize)
+                size_t prefixLen = strlen(currentWord);
+                while (prefixLen < lcp && (len + 1 < outSize))
                 {
-                    out[len ++] = matches[0][prefixLen++];
+                    out[len++] = matches[0][prefixLen++];
                 }
+
                 out[outSize - 1] = '\0';
                 len = strlen(out);
                 cursorPos = len;
                 redraw(prompt, out, cursorPos);
 
-                if (tabCount >= 1)
+                if(tabCount >= 1)
                 {
                     printf("\n");
-                    for (size_t i = 0 ; i < matchesSize ; i++)
+                    for(size_t i = 0 ; i < matchesSize ; i++)
                     {
                         printf("%s ", matches[i]);
                     }
                     printf("\n");
                     redraw(prompt, out, cursorPos);
- 
-                
                 }
             }
-            free(matches);
-            tabCount ++ ;
+
+            if(matches != NULL)
+            {
+                for ( size_t i = 0 ; i < matchesSize ; i++)
+                {
+                    free(matches[i]);
+                }
+                free(matches);
+            }
+            tabCount++;
             continue;
         }
         if (c >= 32 && c <= 126)

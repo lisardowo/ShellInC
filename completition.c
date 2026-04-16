@@ -196,7 +196,7 @@ size_t prefixMatches (availableCommands *list, char *prefix, char ***matches)
     {
         if (startWith(list->items[i], prefix))
         {
-            temp[v++] = list->items[i];
+            temp[v++] = strdup(list->items[i]);
         }
     }
 

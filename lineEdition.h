@@ -1,6 +1,7 @@
 
 #pragma once
 
+#include "fileCompletion.h"
 #include "completition.h"
 #include <termios.h>
 #include <unistd.h>
