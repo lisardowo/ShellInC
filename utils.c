@@ -44,7 +44,7 @@ bool isOperator(char *token)
 
 int getFileDescriptor(const char *descriptorTarget, int flags)
 {
-  int fileDescriptor = open(descriptorTarget, flags,0644);
+  int fileDescriptor = open(descriptorTarget, flags, 0644);
 
   return fileDescriptor;
 }

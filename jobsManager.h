@@ -22,4 +22,5 @@ void initJob();
 int addJob(pid_t pid, char *command);
 void removeJob(pid_t pid);
 void checkBacktroundJobs();
-int builtIns();
+
+extern job jobList[maxJobs];

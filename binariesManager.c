@@ -1,10 +1,8 @@
+
 #include "binariesManager.h"
-#include "utils.h"
-#include "signalsManager.h"
 
 
-
-int executeBin(char *stdoutPath,char *stdErrPath,char *stdOutAppendPath, char *stdErrAppendPath, bool redirectedstdout, bool redirectedStdErr, bool appendStdOut, bool appendStdErr, char *tokens[])
+int executeBin(bool toBackground, char *stdoutPath,char *stdErrPath,char *stdOutAppendPath, char *stdErrAppendPath, bool redirectedstdout, bool redirectedStdErr, bool appendStdOut, bool appendStdErr, char *tokens[])
 {
   
   char* binPath = getPath(argv[0]);
@@ -14,8 +12,9 @@ int executeBin(char *stdoutPath,char *stdErrPath,char *stdOutAppendPath, char *s
     printf("%s: command not found\n", argv[0]);
     return -1;
   }
-
-  if (fork() == 0)
+  
+  pid_t pid = fork();
+  if (pid == 0)
   {
 
     restoreSignalsInChild();
@@ -72,11 +71,19 @@ int executeBin(char *stdoutPath,char *stdErrPath,char *stdOutAppendPath, char *s
 
   
     execv(binPath, tokens);
-    return 0;
+    exit(1);
   }
   else
   {
-    wait(NULL);
+    if (toBackground)
+    {
+      addJob(pid, argv[0]);
+      return 0 ;
+    }
+    else
+    {
+      waitpid(pid, NULL, 0);
+    }
   }
   return 0 ;
 }

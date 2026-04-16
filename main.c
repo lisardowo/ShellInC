@@ -14,6 +14,7 @@
 #include "signalsManager.h"
 #include "expansion.h"
 #include "globbing.h"
+#include "jobsManager.h"
 
 void createPrompt();
 void REPL();
@@ -93,9 +94,29 @@ void REPL()
 
     expandArguments(argv);
     expandGlobs(argv);
+      
+    bool toBackgrund = false;
+
+    if (argumentCount > 0)
+    {
+      int lastIndex = 0;
+      while(argv[lastIndex + 1] != NULL )
+      {
+        lastIndex++;
+      }
+      if(strcmp(argv[lastIndex], "&") == 0)
+      {
+        toBackgrund = true;
+        argv[lastIndex] = false;
+      }
+    }
+
+    checkBacktroundJobs();
 
     char *segments[100][100];
     segmentType typeOfSegment[100];
+
+ 
 
     if (argv[0] == NULL)
     {
@@ -319,7 +340,7 @@ void REPL()
 
     if (pipelineSegment[v] > 1)
     {
-      lastStatus = runPipeline(argv, pipelines[v], pipelineSegment[v], historyBuffer , redirectedstdout, redirectedstderr, appendStdOut, appendStdErr, stdoutPath, stderrPath, stdoutAppendPath , stderrAppendPath);
+      lastStatus = runPipeline(toBackgrund,argv, pipelines[v], pipelineSegment[v], historyBuffer , redirectedstdout, redirectedstderr, appendStdOut, appendStdErr, stdoutPath, stderrPath, stdoutAppendPath , stderrAppendPath);
     }
     else
     {
@@ -371,10 +392,17 @@ void REPL()
         lastStatus = type(current, redirectedstdout, redirectedstderr, appendStdOut, appendStdErr, stdoutPath, stderrPath, stdoutAppendPath, stderrAppendPath) ;
     
       }
+      
+      else if(strcmp("jobs", current[0]) == 0 )
+      {      
+       
+        lastStatus = jobs(jobList, redirectedstdout, appendStdOut, stdoutPath, stdoutAppendPath) ;
+    
+      }
 
       else
       {
-        lastStatus = executeBin(stdoutPath, stderrPath, stdoutAppendPath, stderrAppendPath, redirectedstdout, redirectedstderr, appendStdOut, appendStdErr, current);
+        lastStatus = executeBin(toBackgrund, stdoutPath, stderrPath, stdoutAppendPath, stderrAppendPath, redirectedstdout, redirectedstderr, appendStdOut, appendStdErr, current);
       }
     }
    

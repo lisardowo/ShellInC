@@ -1,7 +1,7 @@
 
 #include "jobsManager.h"
 
-static job jobList[maxJobs];
+job jobList[maxJobs];
 static int nextJobId = 1;
 
 void initJob()
@@ -14,7 +14,7 @@ void initJob()
 
 int addJob(pid_t pid, char *command)
 {
-    for (int i = 0 ; maxJobs ; i++)
+    for (int i = 0 ; i < maxJobs ; i++)
     {
         if(!jobList[i].running)
         {
@@ -23,7 +23,7 @@ int addJob(pid_t pid, char *command)
             jobList[i].pid = pid;
             strncpy(jobList[i].command, command , sizeof(jobList[i].command) - 1);
             jobList[i].command[sizeof(jobList[i].command) - 1] = '\0';
-            jobList[i].running = false;
+            jobList[i].running = true;
 
             printf("[%d] %d\n", jobList[i].id, jobList[i].pid);
             return jobList[i].id;
@@ -54,7 +54,7 @@ void removeJob(pid_t pid)
             }
             if (emptyList)
             {
-                nextJobId;
+                nextJobId = 1;
             }
 
             break;
@@ -83,3 +83,4 @@ void checkBacktroundJobs()
         }
     }
 }
+

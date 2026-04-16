@@ -299,3 +299,54 @@ int echo(char **current, bool redirectedstdout,  bool appendStdOut, char *stdout
       printf("\n");
       return 0;
 }
+
+int jobs(job *jobList,bool redirectedstdout, bool appendStdOut, char *stdoutPath,  char *stdoutAppendPath)
+{
+    if (redirectedstdout)
+    {
+
+        int fd = getFileDescriptor(stdoutPath , O_WRONLY | O_TRUNC | O_CREAT);
+        for(int i = 0 ; i < maxJobs ; i++)
+        {
+            if (jobList[i].running)
+            {
+                dprintf(fd, "[%d]    Running         %s\n", jobList->id, jobList->command);
+            }
+    
+        }
+        
+        close(fd);
+        return 0;
+
+    }
+
+    if (appendStdOut)
+    {
+    
+        int fd = getFileDescriptor(stdoutAppendPath , O_WRONLY | O_APPEND | O_CREAT);
+        for(int i = 0 ; i < maxJobs ; i++)
+        {
+            if (jobList[i].running)
+            {
+                dprintf(fd, "[%d]    Running         %s\n", jobList->id, jobList->command);
+            }
+    
+        }
+        
+        close(fd);
+        return 0;
+        
+    }
+
+    for(int i = 0 ; i < maxJobs ; i++)
+    {
+        if (jobList[i].running)
+        {
+            printf("[%d]    Running         %s\n", jobList->id, jobList->command);
+        }
+    
+    }
+
+    return 0;
+    
+}

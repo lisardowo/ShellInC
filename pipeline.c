@@ -127,11 +127,11 @@ int externalInChild(char **current, bool redirectedStdErr, bool appendStdErr, ch
     return 126;
 }
 
-int runPipeline(char *argv[],char *commands[100][100], int commandCount, char **historyBuffer, bool redirectedstdout, bool redirectedstderr, bool appendStdOut, bool appendStdErr, char *stdoutPath, char *stderrPath, char *stdoutAppendPath, char *stderrAppendPath)
+int runPipeline(bool toBackground, char *argv[],char *commands[100][100], int commandCount, char **historyBuffer, bool redirectedstdout, bool redirectedstderr, bool appendStdOut, bool appendStdErr, char *stdoutPath, char *stderrPath, char *stdoutAppendPath, char *stderrAppendPath)
 {
     int prev_pipe_read_end = -1;
     pid_t pids[100];
-    int pid_count = 0;
+    int pidCount = 0;
 
     for (int i = 0; i < commandCount; i++)
     {
@@ -189,7 +189,7 @@ int runPipeline(char *argv[],char *commands[100][100], int commandCount, char **
         else
         {
         
-            pids[pid_count++] = pid;
+            pids[pidCount++] = pid;
 
             if (prev_pipe_read_end != -1)
             {
@@ -202,27 +202,34 @@ int runPipeline(char *argv[],char *commands[100][100], int commandCount, char **
                 prev_pipe_read_end = fds[0];
             }
         }
+
     }
 
   
-    int last_status = 0;
-    for (int i = 0; i < pid_count; i++)
+    if(toBackground)
+    {
+        addJob(pids[pidCount - 1], "pipeline");
+        return 0 ;
+    }
+
+    int lastStatus = 0;
+    for (int i = 0; i < pidCount; i++)
     {
         int wstatus;
         waitpid(pids[i], &wstatus, 0);
         
-        if (i == pid_count - 1)
+        if (i == pidCount - 1)
         {
             if (WIFEXITED(wstatus))
             {
-                last_status = WEXITSTATUS(wstatus);
+                lastStatus = WEXITSTATUS(wstatus);
             }
             else
             {
-                last_status = 1; 
+                lastStatus = 1; 
             }
         }
     }
 
-    return last_status;
+    return lastStatus;
 }
