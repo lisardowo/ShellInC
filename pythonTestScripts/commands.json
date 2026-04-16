@@ -34,16 +34,16 @@
     "stage3": {
         "commands" : ["echo 'hello world'",
                      "echo \"hello world\" ",
-                     "echo one\two",
+                     "echo one\\two",
                      "echo \"a\"b\"",
-                     "echo 'a\b'",
+                     "echo 'a\\b'",
                      "\"echo\" \"quoted executable\""
                     ],
         "expectedOut" : ["hello world",
                          "hello world",
                          "onetwo",
                          "ab",
-                         "a\b",
+                         "a\\b",
                          "quoted executable"
                         ]
     },
@@ -64,61 +64,55 @@
                         ]
     },
     "stage5": {
-        "commands" : ["ty+TAB",
-                     "ech+TAB",
-                     "mkdi+TAB"
+        "commands" : ["type+TAB echo",
+                     "type+TAB pwd",
+                     "echo+TAB hola"
                     ],
-        "expectedOut" : ["self complete to type",
-                         "self complete to echo",
-                         "self complete to mkdir"
+        "expectedOut" : ["echo is a shell builtin",
+                         "pwd is a shell builtin",
+                         "hola"
                         ]
     },
     "stage6": {
-        "commands" : ["cat te+TAB",
-                     "cat src/ma+TAB",
-                     "cd sr+TAB",
-                     "cat src/test/te+TAB",
-                     "cat src/no+TAB",
-                     "cat ./s+TAB"
+        "commands" : ["cat ../err_l+TAB",
+                     "cat ../hi.t+TAB",
+                     "cat ../ok.t+TAB",
+                     "cat ../typeT.t+TAB",
+                     "cat ../niuF+TAB"
                     ],
-        "expectedOut" : ["hello",
-                         "hello world",
-                         "echo is a shell builtin",
-                         "usr/bin/ls",
-                         "invalid_command_xyz: command not found",
-                         "No output, shell should exit cleanly"
+        "expectedOut" : ["error",
+                         "hello",
+                         "hola",
+                         "echo is /usr/bin/echo",
+                         "niuappend\nniuappend"
                         ]
     },
     "stage7": {
         "commands" : ["sleep 1 &",
                      "jobs",
                      "sleep 2 &",
-                     "jobs",
-                     "sleep 1",
                      "jobs"
                     ],
-        "expectedOut" : ["hello",
-                         "hello world",
-                         "echo is a shell builtin",
-                         "usr/bin/ls",
-                         "invalid_command_xyz: command not found",
-                         "No output, shell should exit cleanly"
+        "expectedOut" : ["[1] proccesID",
+                         "[1] Running    sleep",
+                         "[2] proccesID",
+                         "[1]+ Done     sleep\n[2]  Running     sleep"
                         ]
     },
     "stage8": {
         "commands" : ["echo hello | cat",
-                     "printf \"a\nb\n\" | wc -l",
-                     "echo echo | re a-z A-Z",
-                     "printf \"x\ny\nz\n\" | grep y",
+                     "printf \"a\\nb\\n\" | wc -l",
+                     "echo hello | tr a-z A-Z",
+                     "printf \"x\\ny\\nz\\n\" | grep y",
                      "echo test | rev",
-                     "printf \"1\n2\n3\n\" | tail -n 1"
+                     "printf \"1\\n2\\n3\\n\" | tail -n 1"
                     ],
         "expectedOut" : ["hello",
-                         "hello world",
-                         "echo is a shell builtin",
-                         "usr/bin/ls",
-                         "invalid_command_xyz: command not found",
-                         "No output, shell should exit cleanly"
+                         "2",
+                         "HELLO",
+                         "y",
+                         "tset",
+                         "3"
                         ]
     },
     "stage9": {
@@ -128,7 +122,7 @@
                     ],
         "expectedOut" : ["cmd1",
                          "cmd2",
-                         "most recent shall be: echo cmd1, echo cmd2"
+                         "most recent shall be: history, echo cmd2, echo cmd1"
                         ]
     },
     "stage10": {
