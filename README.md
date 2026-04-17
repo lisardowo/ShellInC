@@ -329,34 +329,27 @@ this section explains how to add new features:
   4. cmake
   5. git
   6. python
-  
 ```
 
 ### 7.2 Clone
 
   In your terminal: 
-```
-
-  1. git clone https://github.com/lisardowo/Ghost-In-The-Shell.git
-  2. cd Ghost-In-The-Shell
-
+```bash
+git clone https://github.com/lisardowo/Ghost-In-The-Shell.git
+cd Ghost-In-The-Shell
 ```
 ### 7.3 Build 
   
   In your terminal: 
-  ```
-
-  1. make
-
+  ```bash
+  make
   ```
 
 ### 7.4 Run
 
 In your terminal: 
-```
-
+```bash
 ./shell
-
 ```
 
 ### 7.5 Some quick tests
@@ -392,33 +385,33 @@ In your terminal:
 
   Now that you are ready to use the scripts heres a quick guide:
     move into pythonTestScripts directory
-    ```
-    bash
-    cd ./pythonTestScripts
-    ```
-    from pythonTestScripts dir you can run the test with
-    ```
-    bash
-    python ./<testScript>.py
-    ```
-    here is the list of all the available scripts and a overview of what it does:
-      - basics.py: test the basic features (command execution, builtins etc)
-      - navigating.py: test the capacity to navigate through your file system  
-      - quoting.py: test the usage of quotes and how it modifies the behavior in a command
-      - redirection.py: test the redirection feature (forwarding the output of a command to a file)
-      - commandCompletion.py: test the self completion of commands when pressing TAB
-      - filenmeCompletion.py: test the self completion of directories and files when pressing TAB
-      - backgroundJobs.py: test the capacity of queue commands to keep using the program while queued commands keep running 
-      - pipelining.py: test the concatenation of commands using the previous output as argument
-      - history.py: test the command history
-      - historyPersistence.py: test the persistency across sessions
 
-  the usage of one of this scripts would look like this:
-  ```
-  bash
+```bash
+cd ./pythonTestScripts
+```
 
-  python ./basics.py
-  ```
+from pythonTestScripts dir you can run the test with
+    
+ ```bash
+python ./<testScript>.py
+```
+
+here is the list of all the available scripts and a overview of what it does:
+  1. basics.py: test the basic features (command execution, builtins etc)
+  2. navigating.py: test the capacity to navigate through your file system  
+  3. quoting.py: test the usage of quotes and how it modifies the behavior in a command
+  4. redirection.py: test the redirection feature (forwarding the output of a command to a file)
+  5. commandCompletion.py: test the self completion of commands when pressing TAB
+  6. filenmeCompletion.py: test the self completion of directories and files when pressing TAB
+  7. backgroundJobs.py: test the capacity of queue commands to keep using the program while queued commands keep running 
+  8. pipelining.py: test the concatenation of commands using the previous output as argument
+  9. history.py: test the command history
+  10. historyPersistence.py: test the persistency across sessions
+
+the usage of one of this scripts would look like this:
+```bash
+python ./basics.py
+```
 
   Output should look like this:
   
@@ -445,7 +438,6 @@ In your terminal:
   No output, shell should exit cleanly
 
   Exit code: 0
-
   ```
 
   you can compare output with expected output and notice that are in fact the same
