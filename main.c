@@ -3,18 +3,13 @@
 #include <string.h>
 #include <unistd.h>
 
+#include "proccesess.h"
 #include "pipeline.h"
-#include "lineEdition.h"
-#include "binariesManager.h"
 #include "arguments.h"
-#include "inputManager.h"
-#include "getHistory.h"
 #include "utils.h"
-#include "builtIn.h"
-#include "signalsManager.h"
-#include "expansion.h"
-#include "globbing.h"
-#include "jobsManager.h"
+#include "selfCompletion.h"
+#include "history.h"
+#include "commands.h"
 
 void createPrompt();
 void REPL();

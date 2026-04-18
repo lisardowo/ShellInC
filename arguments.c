@@ -1,8 +1,12 @@
-
 #include "arguments.h"
+
+char userInput[10000];
 
 static char argvStorage[10000];
 char *argv[1000];
+
+static char storage[1000];
+static int storage_position = 0;
 
 void argumentExtractor(char *userInput, int argumentCount)
 {
@@ -346,17 +350,14 @@ void restoreSpaces(char *userInput)
 }
 
 
-static char storage[1000];
-static int storagePosition = 0;
-
-static void resetStoragePosition() 
+static void resetStorage_position() 
 {
-    storagePosition = 0;
+    storage_position = 0;
 }
 
 void expandArguments(char *argv[])
 {
-    resetStoragePosition();
+    resetStorage_position();
 
     for(int i = 0 ; argv[i] != NULL; i++)
     {
@@ -367,7 +368,7 @@ void expandArguments(char *argv[])
 
         char *originalToken = argv[i];
         char tempBuffer[1000];
-        int tempPosition = 0;
+        int temp_position = 0;
         bool isExpandible = false;
 
         for (int v = 0 ; originalToken[v] != '\0' ; v++)
@@ -397,9 +398,9 @@ void expandArguments(char *argv[])
                 {
                     for(int k = 0 ; envValue[k] != '\0' ; k++)
                     {
-                        if (tempPosition < (int)sizeof(tempBuffer) - 1)
+                        if (temp_position < (int)sizeof(tempBuffer) - 1)
                         {
-                            tempBuffer[tempPosition++] = envValue[k]; 
+                            tempBuffer[temp_position++] = envValue[k]; 
                         }
                     }
                 }
@@ -407,26 +408,28 @@ void expandArguments(char *argv[])
 
             else
             {
-                if(tempPosition < (int)sizeof(tempBuffer) - 1)   
+                if(temp_position < (int)sizeof(tempBuffer) - 1)   
                 {
-                    tempBuffer[tempPosition++] = originalToken[v];
+                    tempBuffer[temp_position++] = originalToken[v];
                 }
             }   
         }
-                tempBuffer[tempPosition++] = '\0';
+                tempBuffer[temp_position++] = '\0';
 
                 if (isExpandible)
                 {
                     int len = strlen(tempBuffer);
-                    if((storagePosition + len) + 1 < (int)sizeof(storage))
+                    if((storage_position + len) + 1 < (int)sizeof(storage))
                     {
-                        strcpy(&storage[storagePosition], tempBuffer);
-                        argv[i] = &storage[storagePosition];
-                        storagePosition += (len + 1);
+                        strcpy(&storage[storage_position], tempBuffer);
+                        argv[i] = &storage[storage_position];
+                        storage_position += (len + 1);
                     }
                 }
 
             }
-        }
+}
+
+
 
 

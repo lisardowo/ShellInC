@@ -1,6 +1,6 @@
 
-#include "getHistory.h"
-#include "utils.h"
+#include "history.h"
+
 
 static void getHistoryFilePath(char *pathBuffer, size_t size);
 

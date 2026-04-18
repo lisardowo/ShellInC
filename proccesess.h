@@ -1,4 +1,6 @@
 
+#pragma once
+
 #include "utils.h"
 #include <sys/types.h>
 #include <stdbool.h>
@@ -7,16 +9,11 @@
 #include <string.h>
 #include <signal.h>
 #include <stddef.h>
+#include <fcntl.h>
+#include "job.h"
+#include "utils.h"
 
 #define maxJobs 100
-
-typedef struct 
-{
-    int id;
-    pid_t pid;
-    char command[1024];
-    bool running;
-} job;
 
 extern job jobList[maxJobs];
 
@@ -25,3 +22,8 @@ void removeJob(pid_t pid);
 void checkBacktroundJobs();
 void ignoreSignalsInParent();
 void restoreSignalsInChild();
+int reddirectInChild(bool redirectedStdOut, bool redirectedStdErr, bool appendStdOuut, bool appendStdErr,char *stdOutPath, char *stdErrPath, char *stdoutAppendPath, char *stderrAppendPath);
+int runPipeline(bool toBackground, char *argv[],char *commands[100][100], int commandCount ,char **historyBuffer, bool redirectedstdout, bool redirectedstderr, bool appendStdOut, bool appendStdErr, char *stdoutPath, char *stderrPath, char *stdoutAppendPath, char *stderrAppendPath);
+int externalInChild(char **current, bool redirectedStdErr, bool appendStdErr, char *stdErrPath, char* stdErrAppendPath);
+int runBuiltinChild(char *argv[], char **current, char **historyBuffer,bool redirectedStdOut, bool redirectedStdErr, bool appendStdOuut, bool appendStdErr,char *stdOutPath, char *stdErrPath, char *stdoutAppendPath, char *stderrAppendPath);
+int runBuiltin(char *argv[], char **current, char **historyBuffer,bool redirectedStdOut, bool redirectedStdErr, bool appendStdOuut, bool appendStdErr,char *stdOutPath, char *stdErrPath, char *stdoutAppendPath, char *stderrAppendPath);

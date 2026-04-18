@@ -1,16 +1,16 @@
+
 #pragma once
 
 #include <stdlib.h>
 #include <stdbool.h>
 #include <fcntl.h>
 #include <stdio.h>
-#include "utils.h"
 #include <unistd.h>
 #include <sys/wait.h>
-#include "jobsManager.h"
+#include "job.h"
 #include "arguments.h"
 #include "utils.h"
-#include "signalsManager.h"
+#include "job.h"
 
 extern char binPath[100000];
 

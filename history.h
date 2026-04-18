@@ -7,6 +7,7 @@
 #include <fcntl.h>
 #include <unistd.h>
 #include <stdbool.h>
+#include "utils.h"
 
 void addHistory(char *command, int *historyCount, char *historyBuffer[]);
 void dumpHistory(char *historyBuffer[]);

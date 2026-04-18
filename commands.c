@@ -1,5 +1,5 @@
-
 #include "commands.h"
+#include "proccesess.h"
 
 
 int executeBin(bool toBackground, char *stdoutPath,char *stdErrPath,char *stdOutAppendPath, char *stdErrAppendPath, bool redirectedstdout, bool redirectedStdErr, bool appendStdOut, bool appendStdErr, char *tokens[])
