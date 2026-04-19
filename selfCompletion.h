@@ -20,8 +20,6 @@
 
 size_t fileMatches(char *prefix, char ***matches);
 
-static struct termios g_old;
-
 typedef struct 
 {
     char **items;
