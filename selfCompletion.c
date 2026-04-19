@@ -1,7 +1,7 @@
 
 #include "selfCompletion.h"
 
-
+static struct termios g_old;
 
 
 bool startCommandsList(availableCommands *list)
@@ -275,6 +275,13 @@ size_t fileMatches(char *prefix, char ***matches)
             char fullPath[2048];
             if (lastSlash != NULL)
             {
+                int directoryLen = lastSlash - prefix + 1;
+                if (directoryLen >= (int)sizeof(dirPath)) 
+                {
+                    directoryLen = sizeof(dirPath) -1; 
+                }
+
+            
                 snprintf(fullPath, sizeof(fullPath), "%s%s", dirPath, entry->d_name);
             }
             else

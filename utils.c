@@ -10,21 +10,33 @@ void createPrompt()
 
     if (getcwd(prompt, sizeof(prompt)) != NULL)
     {
+      if(strcmp(prompt, "/") == 0)
+      {
+        snprintf(prompt, sizeof(prompt), "/");
+        return;
+      }
       char *temp[1024];
       char modifiablePrompt[1024];
       strncpy(modifiablePrompt, prompt, sizeof(modifiablePrompt)); 
       modifiablePrompt[sizeof(modifiablePrompt) - 1] = '\0';
+      
       char *modpromptPtr = strtok(modifiablePrompt, "/");
       int i = 0;
+
       while(modpromptPtr != NULL)
       {
-
         temp[i] = modpromptPtr;
-
         i++;
         modpromptPtr = strtok(NULL, "/");
       }
-      snprintf(prompt, sizeof(prompt), "%s/%s $ ", temp[i - 2], temp[i - 1]);
+      if (i >= 2)
+      {
+        snprintf(prompt, sizeof(prompt), "%s/%s $ ", temp[i - 2], temp[i - 1]);
+      }
+      else if (i == 1)
+      {
+        snprintf(prompt, sizeof(prompt), "%s $", temp[0]);
+      }
 
     }
 
@@ -53,7 +65,11 @@ int getFileDescriptor(const char *descriptorTarget, int flags)
 char* getPath(char *command)
 {
   char *path = getenv("PATH");
-  char modifiablePath[10000];
+  if (path == NULL)
+  {
+    return NULL;
+  }
+  char modifiablePath[1000];
   strncpy(modifiablePath, path, sizeof(modifiablePath));
   modifiablePath[sizeof(modifiablePath) - 1] = '\0';
   char *myPtr = strtok(modifiablePath, ":");

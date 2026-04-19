@@ -5,11 +5,11 @@
 int executeBin(bool toBackground, char *stdoutPath,char *stdErrPath,char *stdOutAppendPath, char *stdErrAppendPath, bool redirectedstdout, bool redirectedStdErr, bool appendStdOut, bool appendStdErr, char *tokens[])
 {
   
-  char* binPath = getPath(argv[0]);
+  char* binPath = getPath(tokens[0]);
 
   if(binPath == NULL)
   {
-    printf("%s: command not found\n", argv[0]);
+    printf("%s: command not found\n", tokens[0]);
     return -1;
   }
   
@@ -77,7 +77,7 @@ int executeBin(bool toBackground, char *stdoutPath,char *stdErrPath,char *stdOut
   {
     if (toBackground)
     {
-      addJob(pid, argv[0]);
+      addJob(pid, tokens[0]);
       return 0 ;
     }
     else
@@ -335,6 +335,11 @@ int cd(char **current, bool redirectedstderr, bool appendStdErr, char *stderrPat
      if (current[1] == NULL || strcmp ("~", current[1]) == 0 )
       {
         char *homePath = getenv("HOME");
+        if (homePath == NULL)
+        {
+            printf("cd: HOME not set\n");
+            return 1;
+        }
         return (chdir(homePath) ) ? 0 : 1;
       }
       else

@@ -11,11 +11,6 @@
 #include "history.h"
 #include "commands.h"
 
-//TODO find why 3: warning: ‘g_old’ defined but not used [-Wunused-variable]
-/*   23 | static struct termios g_old;
-      |                       ^~~~~
-      */
-
 void createPrompt();
 void REPL();
 char *historyBuffer[10000];
@@ -70,7 +65,6 @@ void REPL()
     int segment = 0;
     int position = 0;
 
-    char *pipelines[100][100][100];
     int pipelineSegment[100];
     segmentType pipeLineConditionals[100];
 
@@ -295,6 +289,12 @@ void REPL()
   typeOfSegment[segment] = NONE;
 
   int segmentCount = segment + 1;
+  char *(*pipelines)[100][100] = calloc(100, sizeof(*pipelines));
+  if( pipelines == NULL)
+  {
+    printf("shell: Out of memory\n");
+    exit(1);
+  }
 
 
   for (int i = 0 ; i < segmentCount ; i++)
@@ -354,6 +354,7 @@ void REPL()
       if(strcmp("exit", current[0]) == 0)
       {
         dumpHistory(historyBuffer);
+        free(pipelines);
         return;
       }
 
@@ -409,6 +410,6 @@ void REPL()
     prevConditional = pipeLineConditionals[v];
 
   }
-
+  free(pipelines);
 }
 }
