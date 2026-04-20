@@ -2,7 +2,7 @@
 #include "selfCompletion.h"
 
 
-
+static struct termios g_old;
 
 bool startCommandsList(availableCommands *list)
 {

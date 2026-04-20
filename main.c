@@ -11,11 +11,6 @@
 #include "history.h"
 #include "commands.h"
 
-//TODO find why 3: warning: ‘g_old’ defined but not used [-Wunused-variable]
-/*   23 | static struct termios g_old;
-      |                       ^~~~~
-      */
-
 void createPrompt();
 void REPL();
 char *historyBuffer[10000];
