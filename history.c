@@ -71,60 +71,67 @@ static void getHistoryFilePath(char *pathBuffer, size_t size)
     }
 }
 
-void getHistory(int *historyCount, char *historyBuffer[])
+void getHistory(char *historyBuffer[])//try deleting histCount as argument and declare it locally
 {
-    char historyPath[1024]; //Same relative problem with all harcoded path variables
-    getHistoryFilePath(historyPath, sizeof(historyPath));
+  
+  int historyCount = 0;
+  char historyPath[1024];
+  getHistoryFilePath(historyPath, sizeof(historyPath));
 
-    int historyFD = open("historyFile.txt", O_RDONLY);
-   
-    if(historyFD == -1)
+  int historyFd = open(historyPath ,O_RDONLY);
+
+  if(historyFd == -1)
+  {
+    historyBuffer[0] = NULL;
+    return;
+  }
+
+  char chunk[1024];
+  char line[4096];
+  size_t lineLen = 0 ;
+  size_t bytesRead;
+
+  while ((bytesRead = read(historyFd, chunk, sizeof(chunk))) > 0)
+  {
+    for (size_t i = 0 ; i < bytesRead ; i++)
     {
-        historyBuffer[0] = NULL;
-        return;
-    }
-
-    char chunk[1024];
-    char line[4096];
-    size_t lineLen = 0;
-    size_t bytesRead;
-
-    while ((bytesRead = read(historyFD, chunk, sizeof(chunk))) > 0)
-    {
-        for (size_t i = 0 ; i < bytesRead ; i++)
+        if(chunk[i] == '\n')
         {
-            if(chunk[i] == '\n')
+            line[lineLen] = '\0';
+            if(lineLen > 0)
             {
-                line[lineLen] = '\0';
-                if(lineLen > 0 )
+                if(historyCount >= historyBufferMaxSize)
                 {
-                    historyBuffer[*historyCount] = strdup(line);
-                    if (historyBuffer[*historyCount] != NULL)
-                    {
-                        (*historyCount)++;
-                    }
+                    close(historyFd);
+                    historyBuffer[historyCount] = NULL;
+                    return;
                 }
-                lineLen = 0;
+                historyBuffer[historyCount] = strdup(line);
+                if(historyBuffer[historyCount] != NULL)
+                {
+                    (historyCount)++;
+                }
             }
-            else if(lineLen < sizeof(line) - 1)
-            {
-                line[lineLen++] = chunk[i]; 
-            }
-
+            lineLen = 0 ;
         }
-    }
-    if (lineLen > 0)
-    {
-        line[lineLen] = '\0';
-        historyBuffer[*historyCount] = strdup(line);
-        if (historyBuffer[*historyCount] != NULL)
+        else if (lineLen < sizeof(line) - 1)
         {
-            (*historyCount) ++;
+            line[lineLen++] = chunk[i];
         }
     }
-
-    historyBuffer[*historyCount] = NULL;
-    close(historyFD);
+  }
+        if(lineLen > 0 && historyCount < historyBufferMaxSize)
+        {
+            line[lineLen] = '\0';
+            historyBuffer[historyCount] = strdup(line);
+            if (historyBuffer[historyCount] != NULL)
+            {
+                (historyCount)++;
+            }
+        }
+        historyBuffer[historyCount] = NULL;
+        close(historyFd);
+        
 
 }
 
@@ -214,9 +221,10 @@ bool expandHistory(char userInput[], size_t userInputSize, int historyCount, cha
                 }
             }
         }
+      
         else
         {
-            if (tempPosition < (int)sizeof(tempBuffer))
+            if (tempPosition < (int)sizeof(tempBuffer) - 1)
             {
                 tempBuffer[tempPosition++] = userInput[i];
             }

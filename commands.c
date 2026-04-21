@@ -97,122 +97,91 @@ int type(char **current, bool redirectedstdout, bool redirectedstderr, bool appe
         printf("Usage : type <command>\n") ;
         return 1;
     }
-    else if(!strcmp("echo", current[1]) || !strcmp("exit", current[1]) ||
-             !strcmp("type", current[1]) || !strcmp("pwd", current[1]) ||
-             !strcmp("cd", current[1]) || !strcmp("history", current[1]))
+   bool isBuiltin = (!strcmp("echo", current[1]) || !strcmp("exit", current[1]) || 
+                    !strcmp("type", current[1]) || !strcmp("pwd", current[1]) || 
+                    !strcmp("cd", current[1]) || !strcmp("history", current[1]) );
+
+    char *path = isBuiltin ? NULL : getPath(current[1]);
+
+    char message[2048];
+    int exitCode;
+    
+    if(isBuiltin)
     {
-
-         if(redirectedstdout)
-        {
-            int fd = getFileDescriptor(stdoutPath, O_TRUNC | O_CREAT | O_WRONLY);
-            dprintf(fd,"%s is a shell builtin\n", current[1]);
-            close(fd);
-            return 0;
-        }
-
-        if(appendStdOut)
-        {
-            int fd = getFileDescriptor(stdoutAppendPath, O_APPEND | O_CREAT | O_WRONLY);
-            dprintf(fd, "%s is a shell builtin\n", current[1]);
-            close(fd);
-            return 0;
-        }
-
-        printf("%s is a shell builtin\n", current[1]);
-        return 0;
+        snprintf(message, sizeof(message), "%s is a shell builtin\n", current[1]);
+        exitCode = 0;
+    }
+    else if (path != NULL)
+    {
+        snprintf(message, sizeof(message), "%s is %s\n", current[1], path);
+        exitCode = 0;
     }
     else
     {
-        if(redirectedstdout)
+        snprintf(message, sizeof(message), "%s: not found\n", current[1]);
+        exitCode = 1;
+    }
+    if (redirectedstdout && exitCode != 0)
+    {
+        int fd = getFileDescriptor(stdoutPath, O_TRUNC | O_WRONLY | O_CREAT);
+        if (fd == -1)
         {
-            int fd = getFileDescriptor(stdoutPath, O_TRUNC | O_CREAT | O_WRONLY);
-            char *path = getPath(current[1]);
-            if (path != NULL)
-            {
-                dprintf(fd, "%s is %s\n", current[1], path);
-                close(fd);
-                return  0;
-            }
-            else
-            {
-                printf("%s: not found\n", current[1]);
-                close(fd);
-                return 1;
-            }
-        }
+            printf("shell: couldnt write to file");
+            return 1 ;
+        } 
 
-
-        if(redirectedstderr)
+        dprintf(fd, "%s", message);
+        close(fd);
+        return exitCode;
+    }
+    if (appendStdOut && exitCode != 0)
+    {
+        int fd = getFileDescriptor(stdoutPath, O_APPEND | O_WRONLY | O_CREAT);
+        if (fd == -1)
         {
-            int fd = getFileDescriptor(stderrPath, O_TRUNC | O_CREAT | O_WRONLY);
-            char *path = getPath(current[1]);
-            if (path != NULL)
-            {
-                printf("%s is %s\n", current[1], path);
-                close(fd);
-                return  0;
-            }
-            else
-            {
-                dprintf(fd, "%s: not found\n", current[1]);
-                close(fd);
-                return 1;
-            }
-        }
+            printf("shell: couldnt write to file");
+            return 1 ;
+        } 
 
-
-        if(appendStdOut)
-        {
-            int fd = getFileDescriptor(stdoutAppendPath, O_APPEND | O_CREAT | O_WRONLY);
-            char *path = getPath(current[1]);
-            if (path != NULL)
-            {
-                dprintf(fd, "%s is %s\n", current[1], path);
-                close(fd);
-                return  0;
-            }
-            else
-            {
-                printf("%s: not found\n", current[1]);
-                close(fd);
-                return 1;
-            }
-        }
-
-
-        if(appendStdErr)
-        {
-            int fd = getFileDescriptor(stderrAppendPath, O_APPEND | O_CREAT | O_WRONLY);
-            char *path = getPath(current[1]);
-            if (path != NULL)
-            {
-                printf("%s is %s\n", current[1], path);
-                close(fd);
-                return  0;
-            }
-            else
-            {
-                dprintf(fd, "%s: not found\n", current[1]);
-                close(fd);
-                return 1;
-            }
-        }
-
-            char *path = getPath(current[1]);
-            if (path != NULL)
-            {
-                printf("%s is %s\n", current[1], path);
-                return  0;
-            }
-            else
-            {
-                printf("%s: not found\n", current[1]);
-                return 1;
-            }
-
+        dprintf(fd, "%s", message);
+        close(fd);
+        return exitCode;
     }
 
-    return 1; 
+    if (redirectedstderr && exitCode != 0)
+    {
+        int fd = getFileDescriptor(stdoutPath, O_TRUNC | O_WRONLY | O_CREAT);
+        if (fd == -1)
+        {
+            printf("shell: couldnt write to file");
+            return 1 ;
+        } 
+
+        dprintf(fd, "%s", message);
+        close(fd);
+        return exitCode;
+    }
+    if (appendStdErr && exitCode != 0)
+    {
+        int fd = getFileDescriptor(stdoutPath, O_APPEND | O_WRONLY | O_CREAT);
+        if (fd == -1)
+        {
+            printf("shell: couldnt write to file");
+            return 1 ;
+        } 
+
+        dprintf(fd, "%s", message);
+        close(fd);
+        return exitCode;
+    }
+
+    if (exitCode == 0)
+    {
+        printf("%s", message);
+    }
+    
+    return exitCode;
+
 }
 
 int history(char **current, char *historyBuffer[], bool redirectedstdout, bool appendStdOut,  char *stdoutPath, char *stdoutAppendPath)

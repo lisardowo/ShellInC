@@ -46,7 +46,7 @@ void REPL()
   
   availableCommands commandsList;
   fillCommands(&commandsList);
-  getHistory(&historyCount, historyBuffer);
+  getHistory(historyBuffer);
 
   while (true)
   {
@@ -356,6 +356,7 @@ void REPL()
       if(current[0] == NULL)
       {
         lastStatus = 1;
+        continue;
       }
 
       if(strcmp("exit", current[0]) == 0)

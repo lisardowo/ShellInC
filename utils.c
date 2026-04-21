@@ -76,27 +76,31 @@ int getFileDescriptor(const char *descriptorTarget, int flags)
 char* getPath(char *command)
 {
   char *path = getenv("PATH");
+  
   if (path == NULL)
   {
     return NULL;
   }
-  char modifiablePath[1000];
-  strncpy(modifiablePath, path, sizeof(modifiablePath));
+
+  char modifiablePath[4096];
+  if (strlen(path) >= sizeof(modifiablePath))
+  {
+    printf("shell: warning: PATH too long");
+  }
+  strncpy(modifiablePath, path, sizeof(modifiablePath) - 1);
   modifiablePath[sizeof(modifiablePath) - 1] = '\0';
+
   char *myPtr = strtok(modifiablePath, ":");
 
-  while(myPtr != NULL) 
+  while(myPtr != NULL)
   {
-    
     snprintf(binPath, sizeof(binPath), "%s/%s", myPtr, command);
-    
-    if (access(binPath, X_OK) == 0)
+
+    if(acces(binPath, X_OK) == 0)
     {
-
       return binPath;
-
     }
-   
+
     myPtr = strtok(NULL, ":");
   }
   return NULL;

@@ -29,8 +29,8 @@ void restoreSignalsInChild()
     sigemptyset(&defaultAction.sa_mask);
     
     sigaction(SIGINT, &defaultAction, NULL);
-    sigaction(SIGINT, &defaultAction, NULL);
-    sigaction(SIGINT, &defaultAction, NULL);
+    sigaction(SIGQUIT, &defaultAction, NULL);
+    sigaction(SIGTSTP, &defaultAction, NULL);
 
 }
 
