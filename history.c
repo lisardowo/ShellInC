@@ -13,7 +13,8 @@ void addHistory(char *command, int *historyCount, char *historyBuffer[])
         return;
    }
 
-   if (*historyCount > 0 && strcmp(historyBuffer[*historyCount - 1], command) == 0)
+   if (*historyCount > 0 && historyBuffer[*historyCount - 1] != NULL &&
+       strcmp(historyBuffer[*historyCount - 1], command) == 0)
    {
         return;
    }
@@ -71,7 +72,7 @@ static void getHistoryFilePath(char *pathBuffer, size_t size)
     }
 }
 
-void getHistory(char *historyBuffer[])//try deleting histCount as argument and declare it locally
+int getHistory(char *historyBuffer[])//try deleting histCount as argument and declare it locally
 {
   
   int historyCount = 0;
@@ -83,7 +84,7 @@ void getHistory(char *historyBuffer[])//try deleting histCount as argument and d
   if(historyFd == -1)
   {
     historyBuffer[0] = NULL;
-    return;
+        return 0;
   }
 
   char chunk[1024];
@@ -103,8 +104,8 @@ void getHistory(char *historyBuffer[])//try deleting histCount as argument and d
                 if(historyCount >= historyBufferMaxSize)
                 {
                     close(historyFd);
-                    historyBuffer[historyCount] = NULL;
-                    return;
+                    historyBuffer[historyBufferMaxSize - 1] = NULL;
+                    return historyCount;
                 }
                 historyBuffer[historyCount] = strdup(line);
                 if(historyBuffer[historyCount] != NULL)
@@ -132,6 +133,7 @@ void getHistory(char *historyBuffer[])//try deleting histCount as argument and d
         historyBuffer[historyCount] = NULL;
         close(historyFd);
         
+        return historyCount;
 
 }
 

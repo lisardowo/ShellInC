@@ -11,5 +11,5 @@
 
 void addHistory(char *command, int *historyCount, char *historyBuffer[]);
 void dumpHistory(char *historyBuffer[]);
-void getHistory(char *historyBuffer[]);
+int getHistory(char *historyBuffer[]);
 bool expandHistory(char userInput[], size_t userInputSize, int historyCount, char *historyBuffer[]);
