@@ -71,8 +71,10 @@ int executeBin(bool toBackground, char *stdoutPath,char *stdErrPath,char *stdOut
 
   
     execv(binPath, tokens);
+    free(binPath);
     exit(1);
   }
+  
   else
   {
     if (toBackground)
@@ -85,6 +87,7 @@ int executeBin(bool toBackground, char *stdoutPath,char *stdErrPath,char *stdOut
       waitpid(pid, NULL, 0);
     }
   }
+  free(binPath); // this free should be here? seems like mem leak
   return 0 ;
 }
 
@@ -121,7 +124,10 @@ int type(char **current, bool redirectedstdout, bool redirectedstderr, bool appe
         snprintf(message, sizeof(message), "%s: not found\n", current[1]);
         exitCode = 1;
     }
-
+    if(path != NULL)
+    {
+        free(path);
+    }
     if(exitCode == 0)
     {
         if(redirectedstdout)

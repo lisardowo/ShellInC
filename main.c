@@ -11,6 +11,10 @@
 #include "history.h"
 #include "commands.h"
 
+#define MAX_SEGMENTS 100
+#define MAX_ARGS_PER_SEG 100
+#define MAX_PIPELINES 100
+
 //TODO bug: cuando pegas cosas con comillas, el auto completado detecta las comillas y las cierra automaticamente (Se debe asumir que si lo esta pegando el usuario, es por que ya no necesita autocompletar)
 //TODO jump between words when ctrl + arrow are detected
 
@@ -64,8 +68,8 @@ void REPL()
     int segment = 0;
     int position = 0;
 
-    int pipelineSegment[100]; 
-    segmentType pipeLineConditionals[100];
+    int pipelineSegment[MAX_PIPELINES]; 
+    segmentType pipeLineConditionals[MAX_PIPELINES];
 
     int pipelineCount = 0;
     int commandInScope = 0;
@@ -105,8 +109,8 @@ void REPL()
 
     checkBacktroundJobs();
 
-    char *segments[100][100];
-    segmentType typeOfSegment[100];
+    char *segments[MAX_SEGMENTS][MAX_ARGS_PER_SEG];
+    segmentType typeOfSegment[MAX_SEGMENTS];
 
     if (argv[0] == NULL)
     {
@@ -271,6 +275,16 @@ void REPL()
 
       }
 
+      if(segment >= MAX_SEGMENTS)
+      {
+        fprintf(stderr, "shell: too many pipeline segments  (max %d)\n", MAX_SEGMENTS - 1);
+      }
+
+      if(position >= MAX_ARGS_PER_SEG - 1)
+      {
+        fprintf(stderr, "shell: too many arguments in segment(max %d)\n", MAX_ARGS_PER_SEG);
+        continue;
+      }
       segments[segment][position++] = argv[i];
     }
 

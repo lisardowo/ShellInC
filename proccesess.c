@@ -233,6 +233,7 @@ int externalInChild(char **current, bool redirectedStdErr, bool appendStdErr, ch
         return 127;
     }
     execv(binPath, current);
+    free(binPath);
     return 126;
 }
 

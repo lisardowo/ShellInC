@@ -70,33 +70,33 @@ char* getPath(char *command)
 {
   char *path = getenv("PATH");
   
-  if (path == NULL)
+  if (path == NULL || command == NULL || command[0] == '\0')
   {
     return NULL;
   }
 
   char modifiablePath[4096];
-  if (strlen(path) >= sizeof(modifiablePath))
-  {
-    printf("shell: warning: PATH too long");
-  }
   strncpy(modifiablePath, path, sizeof(modifiablePath) - 1);
   modifiablePath[sizeof(modifiablePath) - 1] = '\0';
 
-  char *myPtr = strtok(modifiablePath, ":");
+  char possibleBin[4096];
+  char *dir = strtok(modifiablePath, ":");
 
-  while(myPtr != NULL)
+  while(dir != NULL)
   {
-    snprintf(binPath, sizeof(binPath), "%s/%s", myPtr, command);
+    snprintf(possibleBin, sizeof(possibleBin), "%s/%s", dir, command);
 
-    if(access(binPath, X_OK) == 0)
+    if(access(possibleBin, X_OK) == 0)
     {
-      return binPath;
+      return strdup(possibleBin);
     }
+    
+    dir = strtok(NULL, ":");
 
-    myPtr = strtok(NULL, ":");
   }
+
   return NULL;
+ 
 }
 
 void historyBufferFree(char *historyBuffer[])
