@@ -66,13 +66,14 @@ void removeJob(pid_t pid)
         if(jobList[i].running && jobList[i].pid == pid)
         {
             jobList[i].running = false;
-            bool emptyList = false ;
+            bool emptyList = true;
 
             for (int j = 0 ; j < maxJobs ; j++)
             {
-                if(jobList[i].running)
+                if(jobList[j].running)
                 {
                     emptyList = false;
+                    break;
                 }
             }
             if (emptyList)

@@ -8,6 +8,8 @@
 #include <unistd.h>
 #include <stdbool.h>
 #include "utils.h"
+#include <errno.h>
+
 
 void addHistory(char *command, int *historyCount, char *historyBuffer[]);
 void dumpHistory(char *historyBuffer[]);

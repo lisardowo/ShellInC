@@ -45,10 +45,15 @@ void dumpHistory(char *historyBuffer[])
     char historyPath[1024]; 
     getHistoryFilePath(historyPath, sizeof(historyPath));
 
-    int fd = open(historyPath, O_CREAT | O_TRUNC | O_WRONLY, ownerOnlyPermissions);
+    int fd = open(historyPath, O_CREAT | O_TRUNC | O_WRONLY | O_NOFOLLOW, ownerOnlyPermissions);
 
     if(fd == -1)
     {
+        return;
+        if(errno == ELOOP)
+        {
+            fprintf(stderr, "shell: warning: refusing to write, history file is a symlink");
+        }
         return;
     }
 
@@ -61,29 +66,36 @@ void dumpHistory(char *historyBuffer[])
 
 static void getHistoryFilePath(char *pathBuffer, size_t size)
 {
-    char *home = getenv("HOME");
-    if (home != NULL)
-    {
-        snprintf(pathBuffer, size, "%s/.GIshellHistory", home);
-    }
-    else
-    {
-        snprintf(pathBuffer, size , ".GIshellHistory");
-    }
+   char *home = getenv("HOME");
+
+   if (home == NULL)
+   {
+        snprintf(pathBuffer, size, ".GIshellHistory");
+        return;
+   }
+
+   size_t homeLen = strlen(home);
+   if(homeLen == 0 || homeLen > 4096)
+   {
+    fprintf(stderr, "shell: warning: invalid HOME, local history file will bre created \n");
+    snprintf(pathBuffer, size, ".GIshellHistory");
+    return;
+   }
+   snprintf(pathBuffer, size, "%s/.GIshellHistory", home);
 }
 
 int getHistory(char *historyBuffer[])//try deleting histCount as argument and declare it locally
 {
   
   int historyCount = 0;
-  char historyPath[1024];
+  char historyPath[4096];
   getHistoryFilePath(historyPath, sizeof(historyPath));
 
-  int historyFd = open(historyPath ,O_RDONLY);
+  int historyFd = open(historyPath ,O_RDONLY | O_NOFOLLOW);
 
   if(historyFd == -1)
   {
-    historyBuffer[0] = NULL;
+        historyBuffer[0] = NULL;
         return 0;
   }
 

@@ -105,7 +105,7 @@ int type(char **current, bool redirectedstdout, bool redirectedstderr, bool appe
 
     char message[2048];
     int exitCode;
-    
+ 
     if(isBuiltin)
     {
         snprintf(message, sizeof(message), "%s is a shell builtin\n", current[1]);
@@ -121,66 +121,69 @@ int type(char **current, bool redirectedstdout, bool redirectedstderr, bool appe
         snprintf(message, sizeof(message), "%s: not found\n", current[1]);
         exitCode = 1;
     }
-    if (redirectedstdout && exitCode != 0)
+
+    if(exitCode == 0)
     {
-        int fd = getFileDescriptor(stdoutPath, O_TRUNC | O_WRONLY | O_CREAT);
-        if (fd == -1)
+        if(redirectedstdout)
         {
-            printf("shell: couldnt write to file");
-            return 1 ;
-        } 
-
-        dprintf(fd, "%s", message);
-        close(fd);
-        return exitCode;
-    }
-    if (appendStdOut && exitCode != 0)
-    {
-        int fd = getFileDescriptor(stdoutAppendPath, O_APPEND | O_WRONLY | O_CREAT);
-        if (fd == -1)
+            int fd = getFileDescriptor(stdoutPath, O_TRUNC | O_WRONLY | O_CREAT);
+            if (fd == -1)
+            {
+                printf("shell: couldnt write to file\n");
+                return 1;
+            }
+            dprintf(fd, "%s", message);
+            close(fd);
+        }
+        else if(appendStdOut)
         {
-            printf("shell: couldnt write to file");
-            return 1 ;
-        } 
-
-        dprintf(fd, "%s", message);
-        close(fd);
-        return exitCode;
-    }
-
-    if (redirectedstderr && exitCode != 0)
-    {
-        int fd = getFileDescriptor(stderrPath, O_TRUNC | O_WRONLY | O_CREAT);
-        if (fd == -1)
+            int fd = getFileDescriptor(stdoutAppendPath, O_APPEND | O_WRONLY | O_CREAT);
+            if (fd == -1)
+            {
+                printf("shell: couldnt write to file\n");
+                return 1;
+            }
+            dprintf(fd, "%s", message);
+            close(fd);
+        }
+        else
         {
-            printf("shell: couldnt write to file");
-            return 1 ;
-        } 
-
-        dprintf(fd, "%s", message);
-        close(fd);
-        return exitCode;
+            printf("%s", message);
+            return 0;
+        }
     }
-    if (appendStdErr && exitCode != 0)
+    else
     {
-        int fd = getFileDescriptor(stderrAppendPath, O_APPEND | O_WRONLY | O_CREAT);
-        if (fd == -1)
+        if(redirectedstderr)
         {
-            printf("shell: couldnt write to file");
-            return 1 ;
-        } 
+            int fd = getFileDescriptor(stderrPath, O_APPEND | O_WRONLY | O_CREAT);
+            if (fd == -1)
+            {
+                printf("shell: couldnt write to file\n");
+                return 1;
+            }
+            dprintf(fd, "%s", message);
+            close(fd);
+        }
+        else if(appendStdErr)
+        {
+            int fd = getFileDescriptor(stderrAppendPath, O_APPEND | O_WRONLY | O_CREAT);
+            if (fd == -1)
+            {
+                printf("shell: couldnt write to file\n");
+                return 1;
+            }
+            dprintf(fd, "%s", message);
+            close(fd);
+        }
+        else 
+        {
+            fprintf(stderr, "%s", message);
+            return 1;
+        }
 
-        dprintf(fd, "%s", message);
-        close(fd);
-        return exitCode;
     }
-
-    if (exitCode == 0)
-    {
-        printf("%s", message);
-    }
-    
-    return exitCode;
+    return 0;
 
 }
 
@@ -309,7 +312,7 @@ int cd(char **current, bool redirectedstderr, bool appendStdErr, char *stderrPat
             printf("cd: HOME not set\n");
             return 1;
         }
-        return (chdir(homePath) ) ? 0 : 1;
+        return (chdir(homePath) == 0) ? 0 : 1;
       }
       else
       {
