@@ -96,7 +96,7 @@ char* getPath(char *command)
   {
     snprintf(binPath, sizeof(binPath), "%s/%s", myPtr, command);
 
-    if(acces(binPath, X_OK) == 0)
+    if(access(binPath, X_OK) == 0)
     {
       return binPath;
     }
@@ -104,4 +104,13 @@ char* getPath(char *command)
     myPtr = strtok(NULL, ":");
   }
   return NULL;
+}
+
+void historyBufferFree(char *historyBuffer[])
+{
+  for(int i = 0 ; historyBuffer[i] != NULL ; i++ )
+  {
+    free(historyBuffer[i]);
+    historyBuffer[i] = NULL;
+  }
 }

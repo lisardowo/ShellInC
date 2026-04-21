@@ -136,7 +136,7 @@ int type(char **current, bool redirectedstdout, bool redirectedstderr, bool appe
     }
     if (appendStdOut && exitCode != 0)
     {
-        int fd = getFileDescriptor(stdoutPath, O_APPEND | O_WRONLY | O_CREAT);
+        int fd = getFileDescriptor(stdoutAppendPath, O_APPEND | O_WRONLY | O_CREAT);
         if (fd == -1)
         {
             printf("shell: couldnt write to file");
@@ -150,7 +150,7 @@ int type(char **current, bool redirectedstdout, bool redirectedstderr, bool appe
 
     if (redirectedstderr && exitCode != 0)
     {
-        int fd = getFileDescriptor(stdoutPath, O_TRUNC | O_WRONLY | O_CREAT);
+        int fd = getFileDescriptor(stderrPath, O_TRUNC | O_WRONLY | O_CREAT);
         if (fd == -1)
         {
             printf("shell: couldnt write to file");
@@ -163,7 +163,7 @@ int type(char **current, bool redirectedstdout, bool redirectedstderr, bool appe
     }
     if (appendStdErr && exitCode != 0)
     {
-        int fd = getFileDescriptor(stdoutPath, O_APPEND | O_WRONLY | O_CREAT);
+        int fd = getFileDescriptor(stderrAppendPath, O_APPEND | O_WRONLY | O_CREAT);
         if (fd == -1)
         {
             printf("shell: couldnt write to file");

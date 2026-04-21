@@ -361,7 +361,10 @@ void REPL()
 
       if(strcmp("exit", current[0]) == 0)
       {
+      
+        commandsFree(&commandsList);
         dumpHistory(historyBuffer);
+        historyBufferFree(historyBuffer);
         free(pipelines);
         return;
       }
