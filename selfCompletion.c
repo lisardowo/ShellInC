@@ -675,6 +675,13 @@ void readLineTab(char *prompt, availableCommands *list, char *out, size_t outSiz
         {
             if (c == '\'' || c == '\"')
             {
+                if (cursorPos < len && out[cursorPos] == c)
+                {
+                    cursorPos++;
+                    redraw(prompt, out, cursorPos);
+                    tabCount = 0;
+                    continue;
+                }
                 if (len + 2 < outSize)
                 {
                     for (size_t i = len + 2 ; i > cursorPos + 1 ; i--)
