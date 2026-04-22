@@ -28,9 +28,9 @@ Main pipeline:
 
 1. Prompting the user.
 2. Receive input .
-3. Tokenize the input via parsing (similar to how argc and argv work in a main function) and sanitize.
-4. search for argv[0] (command) either in PATH or builtin.
-5. Execute command passing the other elements in argv as arguments.
+3. Tokenize the input via parsing (similar to how argc and commandTokens work in a main function) and sanitize.
+4. search for commandTokens[0] (command) either in PATH or builtin.
+5. Execute command passing the other elements in commandTokens as arguments.
 
 Modules:
 
@@ -98,9 +98,9 @@ This section lists all functions declared in headers (expected API surface).
 ### 3.2 `binariesManager.h`
 
 - `char* getPath(char *command);`
-  - if a command(argv[0]) is not a built-in function then program looks for it in PATH variable and if found returns the dir of the binary .
-- `void executeBin(char *stdoutPath,char *stdErrPath, bool redirectedstdout, bool redirectedStdErr, bool appendStdOut, bool appendStdErr, char *argv[]);`
-  - First six parameters are "flags" that controls if the output of given  binary has to be redirected (">" operator) or will display in stdout, last parameter is the full (already tokenized) input (argv). Function forks the procces and executes the binary which addres is given by getPath(), when done child fork collapses to his father, father keeps waiting to that collapse to continue
+  - if a command(commandTokens[0]) is not a built-in function then program looks for it in PATH variable and if found returns the dir of the binary .
+- `void executeBin(char *stdoutPath,char *stdErrPath, bool redirectedstdout, bool redirectedStdErr, bool appendStdOut, bool appendStdErr, char *commandTokens[]);`
+  - First six parameters are "flags" that controls if the output of given  binary has to be redirected (">" operator) or will display in stdout, last parameter is the full (already tokenized) input (commandTokens). Function forks the procces and executes the binary which addres is given by getPath(), when done child fork collapses to his father, father keeps waiting to that collapse to continue
 
 ### 3.3 `completition.h`
 
@@ -167,13 +167,13 @@ This section lists all functions declared in headers (expected API surface).
 
 - `int reddirectInChild(bool redirectedStdOut, bool redirectedStdErr, bool appendStdOuut, bool appendStdErr,char *stdOutPath, char *stdErrPath, char *stdoutAppendPath, char *stderrAppendPath);`
   -  setup the output redirection of pipelined commands 
-- `int runPipeline(bool toBackground, char *argv[],char *commands[100][100], int commandCount ,char **historyBuffer, bool redirectedstdout, bool redirectedstderr, bool appendStdOut, bool appendStdErr, char *stdoutPath, char *stderrPath, char *stdoutAppendPath, char *stderrAppendPath);`
+- `int runPipeline(bool toBackground, char *commandTokens[],char *commands[100][100], int commandCount ,char **historyBuffer, bool redirectedstdout, bool redirectedstderr, bool appendStdOut, bool appendStdErr, char *stdoutPath, char *stderrPath, char *stdoutAppendPath, char *stderrAppendPath);`
   - Executes the piped commands 
 - `int externalInChild(char **current, bool redirectedStdErr, bool appendStdErr, char *stdErrPath, char* stdErrAppendPath);`
   - run external commands in the pipeline
-- `int runBuiltinChild(char *argv[], char **current, char **historyBuffer,bool redirectedStdOut, bool redirectedStdErr, bool appendStdOuut, bool appendStdErr,char *stdOutPath, char *stdErrPath, char *stdoutAppendPath, char *stderrAppendPath);`
+- `int runBuiltinChild(char *commandTokens[], char **current, char **historyBuffer,bool redirectedStdOut, bool redirectedStdErr, bool appendStdOuut, bool appendStdErr,char *stdOutPath, char *stdErrPath, char *stdoutAppendPath, char *stderrAppendPath);`
   - run built in commands in the pipeline
-- `int runBuiltin(char *argv[], char **current, char **historyBuffer,bool redirectedStdOut, bool redirectedStdErr, bool appendStdOuut, bool appendStdErr,char *stdOutPath, char *stdErrPath, char *stdoutAppendPath, char *stderrAppendPath);`
+- `int runBuiltin(char *commandTokens[], char **current, char **historyBuffer,bool redirectedStdOut, bool redirectedStdErr, bool appendStdOuut, bool appendStdErr,char *stdOutPath, char *stdErrPath, char *stdoutAppendPath, char *stderrAppendPath);`
   - run built in commands
 
 ### 3.8 `signalsManager.h`
@@ -211,7 +211,7 @@ This section lists all functions declared in headers (expected API surface).
   - checksBackgroundJobs and if one of them are Done, shows it and removes it from the list
 
 ### 3.12 `globbing.h`
-- `void expandGlobs(char *argv[]);`
+- `void expandGlobs(char *commandTokens[]);`
   - expand glob tokens t something the shell will understand
 ### 3.13 `getHistory.h`
 - `void addHistory(char *command, int *historyCount, char *historyBuffer[]);`
@@ -227,7 +227,7 @@ This section lists all functions declared in headers (expected API surface).
 - `size_t fileMatches(char *prefix, char ***matches);`
   - looks for the dirs and files in the system, returns how many matched the current evaluated prefix
 ### 3.15 `expansion.h`
-- `void expandArguments(char *argv[]);`
+- `void expandArguments(char *commandTokens[]);`
   - takes the arguments and if found a $ expands it to something the shell can understand
 ### 3.16 `builtin.h`
 - `int type(char **current, bool redirectedstdout ,bool redirectedstderr, bool appendStdOut, bool appendStdErr, char *stdoutPath, char *stderrPath , char *stdoutAppendPath, char *stderrAppendPath );`

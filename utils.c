@@ -2,31 +2,48 @@
 #include <fcntl.h>
 #include "utils.h"
 
-char binPath[100000];
+char binPath[100000]; 
 extern char prompt[1024];
+#define generalPermissions 0644
 
 void createPrompt()
 {
 
-    if (getcwd(prompt, sizeof(prompt)) != NULL)
-    {
-      char *temp[1024];
-      char modifiablePrompt[1024];
-      strncpy(modifiablePrompt, prompt, sizeof(modifiablePrompt)); 
-      modifiablePrompt[sizeof(modifiablePrompt) - 1] = '\0';
-      char *modpromptPtr = strtok(modifiablePrompt, "/");
-      int i = 0;
-      while(modpromptPtr != NULL)
-      {
+  char cwd[4096];
 
-        temp[i] = modpromptPtr;
+  if (getcwd(cwd, sizeof(cwd)) == NULL)
+  {
+    snprintf(prompt,sizeof(prompt), "$ ");
+    return;
+  }
 
-        i++;
-        modpromptPtr = strtok(NULL, "/");
-      }
-      snprintf(prompt, sizeof(prompt), "%s/%s $ ", temp[i - 2], temp[i - 1]);
 
-    }
+  char modfiable[4096];
+  strncpy(modfiable, cwd , sizeof(modfiable) - 1);
+  modfiable[sizeof(modfiable) - 1] = 0;
+
+  char *parts[512];
+  int count = 0;
+
+  char *token = strtok(modfiable, "/");
+  while (token != NULL && count < 511)
+  {
+    parts[count++] = token;
+    token = strtok(NULL, "/");
+  }
+
+  if (count >= 2)
+  {
+    snprintf(prompt, sizeof(prompt), "%s/%s $ ", parts[count - 2] , parts[count - 1]);
+  }
+  else if (count == 1)
+  {
+    snprintf(prompt, sizeof(prompt), "%s $ ", parts[0]);
+  }
+  else
+  {
+    snprintf(prompt, sizeof(prompt), "$ ");
+  }
 
 }
 
@@ -44,8 +61,7 @@ bool isOperator(char *token)
 
 int getFileDescriptor(const char *descriptorTarget, int flags)
 {
-  int fileDescriptor = open(descriptorTarget, flags, 0644);
-
+  int fileDescriptor = open(descriptorTarget, flags, generalPermissions);
   return fileDescriptor;
 }
 
@@ -53,24 +69,41 @@ int getFileDescriptor(const char *descriptorTarget, int flags)
 char* getPath(char *command)
 {
   char *path = getenv("PATH");
-  char modifiablePath[10000];
-  strncpy(modifiablePath, path, sizeof(modifiablePath));
-  modifiablePath[sizeof(modifiablePath) - 1] = '\0';
-  char *myPtr = strtok(modifiablePath, ":");
-
-  while(myPtr != NULL) 
+  
+  if (path == NULL || command == NULL || command[0] == '\0')
   {
-    
-    snprintf(binPath, sizeof(binPath), "%s/%s", myPtr, command);
-    
-    if (access(binPath, X_OK) == 0)
-    {
-
-      return binPath;
-
-    }
-   
-    myPtr = strtok(NULL, ":");
+    return NULL;
   }
+
+  char modifiablePath[4096];
+  strncpy(modifiablePath, path, sizeof(modifiablePath) - 1);
+  modifiablePath[sizeof(modifiablePath) - 1] = '\0';
+
+  char possibleBin[4096];
+  char *dir = strtok(modifiablePath, ":");
+
+  while(dir != NULL)
+  {
+    snprintf(possibleBin, sizeof(possibleBin), "%s/%s", dir, command);
+
+    if(access(possibleBin, X_OK) == 0)
+    {
+      return strdup(possibleBin);
+    }
+    
+    dir = strtok(NULL, ":");
+
+  }
+
   return NULL;
+ 
+}
+
+void historyBufferFree(char *historyBuffer[])
+{
+  for(int i = 0 ; historyBuffer[i] != NULL ; i++ )
+  {
+    free(historyBuffer[i]);
+    historyBuffer[i] = NULL;
+  }
 }

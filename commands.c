@@ -1,15 +1,16 @@
 #include "commands.h"
 #include "proccesess.h"
 
+#include <errno.h>
 
 int executeBin(bool toBackground, char *stdoutPath,char *stdErrPath,char *stdOutAppendPath, char *stdErrAppendPath, bool redirectedstdout, bool redirectedStdErr, bool appendStdOut, bool appendStdErr, char *tokens[])
 {
   
-  char* binPath = getPath(argv[0]);
+  char* binPath = getPath(tokens[0]);
 
   if(binPath == NULL)
   {
-    printf("%s: command not found\n", argv[0]);
+    printf("%s: command not found\n", tokens[0]);
     return -1;
   }
   
@@ -71,13 +72,15 @@ int executeBin(bool toBackground, char *stdoutPath,char *stdErrPath,char *stdOut
 
   
     execv(binPath, tokens);
+    free(binPath);
     exit(1);
   }
+  
   else
   {
     if (toBackground)
     {
-      addJob(pid, argv[0]);
+      addJob(pid, tokens[0]);
       return 0 ;
     }
     else
@@ -85,6 +88,7 @@ int executeBin(bool toBackground, char *stdoutPath,char *stdErrPath,char *stdOut
       waitpid(pid, NULL, 0);
     }
   }
+  free(binPath); // this free should be here? seems like mem leak
   return 0 ;
 }
 
@@ -97,122 +101,97 @@ int type(char **current, bool redirectedstdout, bool redirectedstderr, bool appe
         printf("Usage : type <command>\n") ;
         return 1;
     }
-    else if(!strcmp("echo", current[1]) || !strcmp("exit", current[1]) ||
-             !strcmp("type", current[1]) || !strcmp("pwd", current[1]) ||
-             !strcmp("cd", current[1]) || !strcmp("history", current[1]))
+   bool isBuiltin = (!strcmp("echo", current[1]) || !strcmp("exit", current[1]) || 
+                    !strcmp("type", current[1]) || !strcmp("pwd", current[1]) || 
+                    !strcmp("cd", current[1]) || !strcmp("history", current[1]) );
+
+    char *path = isBuiltin ? NULL : getPath(current[1]);
+
+    char message[2048];
+    int exitCode;
+ 
+    if(isBuiltin)
     {
-
-         if(redirectedstdout)
-        {
-            int fd = getFileDescriptor(stdoutPath, O_TRUNC | O_CREAT | O_WRONLY);
-            dprintf(fd,"%s is a shell builtin\n", current[1]);
-            close(fd);
-            return 0;
-        }
-
-        if(appendStdOut)
-        {
-            int fd = getFileDescriptor(stdoutAppendPath, O_APPEND | O_CREAT | O_WRONLY);
-            dprintf(fd, "%s is a shell builtin\n", current[1]);
-            close(fd);
-            return 0;
-        }
-
-        printf("%s is a shell builtin\n", current[1]);
-        return 0;
+        snprintf(message, sizeof(message), "%s is a shell builtin\n", current[1]);
+        exitCode = 0;
+    }
+    else if (path != NULL)
+    {
+        snprintf(message, sizeof(message), "%s is %s\n", current[1], path);
+        exitCode = 0;
     }
     else
     {
+        snprintf(message, sizeof(message), "%s: not found\n", current[1]);
+        exitCode = 1;
+    }
+    if(path != NULL)
+    {
+        free(path);
+    }
+    if(exitCode == 0)
+    {
         if(redirectedstdout)
         {
-            int fd = getFileDescriptor(stdoutPath, O_TRUNC | O_CREAT | O_WRONLY);
-            char *path = getPath(current[1]);
-            if (path != NULL)
+            int fd = getFileDescriptor(stdoutPath, O_TRUNC | O_WRONLY | O_CREAT);
+            if (fd == -1)
             {
-                dprintf(fd, "%s is %s\n", current[1], path);
-                close(fd);
-                return  0;
-            }
-            else
-            {
-                printf("%s: not found\n", current[1]);
-                close(fd);
+                printf("shell: couldnt write to file\n");
                 return 1;
             }
+            dprintf(fd, "%s", message);
+            close(fd);
         }
-
-
+        else if(appendStdOut)
+        {
+            int fd = getFileDescriptor(stdoutAppendPath, O_APPEND | O_WRONLY | O_CREAT);
+            if (fd == -1)
+            {
+                printf("shell: couldnt write to file\n");
+                return 1;
+            }
+            dprintf(fd, "%s", message);
+            close(fd);
+        }
+        else
+        {
+            printf("%s", message);
+            return 0;
+        }
+    }
+    else
+    {
         if(redirectedstderr)
         {
-            int fd = getFileDescriptor(stderrPath, O_TRUNC | O_CREAT | O_WRONLY);
-            char *path = getPath(current[1]);
-            if (path != NULL)
+            int fd = getFileDescriptor(stderrPath, O_APPEND | O_WRONLY | O_CREAT);
+            if (fd == -1)
             {
-                printf("%s is %s\n", current[1], path);
-                close(fd);
-                return  0;
-            }
-            else
-            {
-                dprintf(fd, "%s: not found\n", current[1]);
-                close(fd);
+                printf("shell: couldnt write to file\n");
                 return 1;
             }
+            dprintf(fd, "%s", message);
+            close(fd);
         }
-
-
-        if(appendStdOut)
+        else if(appendStdErr)
         {
-            int fd = getFileDescriptor(stdoutAppendPath, O_APPEND | O_CREAT | O_WRONLY);
-            char *path = getPath(current[1]);
-            if (path != NULL)
+            int fd = getFileDescriptor(stderrAppendPath, O_APPEND | O_WRONLY | O_CREAT);
+            if (fd == -1)
             {
-                dprintf(fd, "%s is %s\n", current[1], path);
-                close(fd);
-                return  0;
-            }
-            else
-            {
-                printf("%s: not found\n", current[1]);
-                close(fd);
+                printf("shell: couldnt write to file\n");
                 return 1;
             }
+            dprintf(fd, "%s", message);
+            close(fd);
         }
-
-
-        if(appendStdErr)
+        else 
         {
-            int fd = getFileDescriptor(stderrAppendPath, O_APPEND | O_CREAT | O_WRONLY);
-            char *path = getPath(current[1]);
-            if (path != NULL)
-            {
-                printf("%s is %s\n", current[1], path);
-                close(fd);
-                return  0;
-            }
-            else
-            {
-                dprintf(fd, "%s: not found\n", current[1]);
-                close(fd);
-                return 1;
-            }
+            fprintf(stderr, "%s", message);
+            return 1;
         }
-
-            char *path = getPath(current[1]);
-            if (path != NULL)
-            {
-                printf("%s is %s\n", current[1], path);
-                return  0;
-            }
-            else
-            {
-                printf("%s: not found\n", current[1]);
-                return 1;
-            }
 
     }
+    return 0;
 
-    return 1; 
 }
 
 int history(char **current, char *historyBuffer[], bool redirectedstdout, bool appendStdOut,  char *stdoutPath, char *stdoutAppendPath)
@@ -264,13 +243,15 @@ int history(char **current, char *historyBuffer[], bool redirectedstdout, bool a
         }
         else
         {
-            int number = atoi(current[1]);
-            if (number > 0 && number < linesToDisplay)
-            {
-                start = linesToDisplay - number;
-            }
+           errno = 0;
+           char *endPtr = NULL;
+           long number = strtol(current[1], &endPtr, 10);
+
+           if (errno != ERANGE && endPtr != current[1] && number > 0 && number < linesToDisplay)
+           {
+                start = linesToDisplay - (int)number;
+           }
         }
-    }
 
     if (redirectedstdout)
     {
@@ -297,6 +278,8 @@ int history(char **current, char *historyBuffer[], bool redirectedstdout, bool a
     for (int i = start ; i < end ; i++)
     {
         printf("%d %s\n", i + 1 , historyBuffer[i]);
+    }
+    return 0;
     }
     return 0;
 }
@@ -335,7 +318,12 @@ int cd(char **current, bool redirectedstderr, bool appendStdErr, char *stderrPat
      if (current[1] == NULL || strcmp ("~", current[1]) == 0 )
       {
         char *homePath = getenv("HOME");
-        return (chdir(homePath) ) ? 0 : 1;
+        if (homePath == NULL)
+        {
+            printf("cd: HOME not set\n");
+            return 1;
+        }
+        return (chdir(homePath) == 0) ? 0 : 1;
       }
       else
       {

@@ -17,6 +17,8 @@
 #define downArrowKey 'B'
 #define rightArrowKey 'C'
 #define leftArrowKey  'D'
+//#define ctrlLeft    ';5D'
+//#define ctrlRight  ';5C' 
 
 size_t fileMatches(char *prefix, char ***matches);
 

@@ -1,39 +1,61 @@
 
-#include "history.h"
 
+#include "history.h"
+#include <errno.h>
+
+#define historyBufferMaxSize 9999
+#define ownerOnlyPermissions 0600
 
 static void getHistoryFilePath(char *pathBuffer, size_t size);
 
 void addHistory(char *command, int *historyCount, char *historyBuffer[])
 {
-    if(command[0] == '\0')
-    {
+   if (command[0] == '\0')
+   {
         return;
-    }
+   }
 
-    if (*historyCount > 0 && strcmp(historyBuffer[*historyCount - 1 ], command) == 0)
-    {
+   if (*historyCount > 0 && historyBuffer[*historyCount - 1] != NULL &&
+       strcmp(historyBuffer[*historyCount - 1], command) == 0)
+   {
         return;
-    }
+   }
+   
+   
+   
+   if(*historyCount < historyBufferMaxSize)
+   {
 
-    if(*historyCount < 10000)
-    {
-        
         historyBuffer[*historyCount] = strdup(command);
-        (*historyCount) ++;
+        (*historyCount)++;
+
+   }
+
+   else
+   {
+        
+        free(historyBuffer[0]);
+        memmove(&historyBuffer[0], &historyBuffer[1], (historyBufferMaxSize - 1) * sizeof(char *));
+        historyBuffer[historyBufferMaxSize - 1] = strdup(command);
 
     }
+
 }
 
 void dumpHistory(char *historyBuffer[])
 {
-    char historyPath[1024];
+
+    char historyPath[4096];
     getHistoryFilePath(historyPath, sizeof(historyPath));
 
-    int fd = open(historyPath, O_CREAT | O_TRUNC | O_WRONLY, 0600);
+    int fd = open(historyPath, O_CREAT | O_TRUNC | O_WRONLY | O_NOFOLLOW, ownerOnlyPermissions);
 
     if(fd == -1)
     {
+        if(errno == ELOOP)
+        {
+            fprintf(stderr, "shell: warning: history file is a symlink, refusing to write\n");
+        }
         return;
     }
 
@@ -46,71 +68,89 @@ void dumpHistory(char *historyBuffer[])
 
 static void getHistoryFilePath(char *pathBuffer, size_t size)
 {
+
     char *home = getenv("HOME");
-    if (home != NULL)
-    {
-        snprintf(pathBuffer, size, "%s/.GIshellHistory", home);
-    }
-    else
-    {
-        snprintf(pathBuffer, size , ".GIshellHistory");
-    }
-}
 
-void getHistory(int *historyCount, char *historyBuffer[])
-{
-    char historyPath[1024];
-    getHistoryFilePath(historyPath, sizeof(historyPath));
-
-    int historyFD = open("historyFile.txt", O_RDONLY);
-   
-    if(historyFD == -1)
+    if (home == NULL)
     {
-        historyBuffer[0] = NULL;
+        snprintf(pathBuffer, size, ".GIshellHistory");
         return;
     }
 
-    char chunk[1024];
-    char line[4096];
-    size_t lineLen = 0;
-    size_t bytesRead;
-
-    while ((bytesRead = read(historyFD, chunk, sizeof(chunk))) > 0)
+    size_t homeLen = strlen(home);
+    if (homeLen == 0 || homeLen > 4096)
     {
-        for (size_t i = 0 ; i < bytesRead ; i++)
+        fprintf(stderr, "shell: warning: HOME is invalid, using local history file\n");
+        snprintf(pathBuffer, size, ".GIshellHistory");
+        return;
+    }
+
+    snprintf(pathBuffer, size, "%s/.GIshellHistory", home);
+}
+
+int getHistory(char *historyBuffer[])//try deleting histCount as argument and declare it locally
+{
+  
+  int historyCount = 0;
+
+    char historyPath[4096];
+    getHistoryFilePath(historyPath, sizeof(historyPath));
+
+    int historyFd = open(historyPath, O_RDONLY | O_NOFOLLOW);
+
+  if(historyFd == -1)
+  {
+        historyBuffer[0] = NULL;
+        return 0;
+  }
+
+  char chunk[1024];
+  char line[4096];
+  size_t lineLen = 0 ;
+  size_t bytesRead;
+
+  while ((bytesRead = read(historyFd, chunk, sizeof(chunk))) > 0)
+  {
+    for (size_t i = 0 ; i < bytesRead ; i++)
+    {
+        if(chunk[i] == '\n')
         {
-            if(chunk[i] == '\n')
+            line[lineLen] = '\0';
+            if(lineLen > 0)
             {
-                line[lineLen] = '\0';
-                if(lineLen > 0 )
+                if(historyCount >= historyBufferMaxSize)
                 {
-                    historyBuffer[*historyCount] = strdup(line);
-                    if (historyBuffer[*historyCount] != NULL)
-                    {
-                        (*historyCount)++;
-                    }
+                    close(historyFd);
+                    historyBuffer[historyBufferMaxSize - 1] = NULL;
+                    return historyCount;
                 }
-                lineLen = 0;
+                historyBuffer[historyCount] = strdup(line);
+                if(historyBuffer[historyCount] != NULL)
+                {
+                    (historyCount)++;
+                }
             }
-            else if(lineLen < sizeof(line) - 1)
-            {
-                line[lineLen++] = chunk[i]; 
-            }
-
+            lineLen = 0 ;
         }
-    }
-    if (lineLen > 0)
-    {
-        line[lineLen] = '\0';
-        historyBuffer[*historyCount] = strdup(line);
-        if (historyBuffer[*historyCount] != NULL)
+        else if (lineLen < sizeof(line) - 1)
         {
-            (*historyCount) ++;
+            line[lineLen++] = chunk[i];
         }
     }
-
-    historyBuffer[*historyCount] = NULL;
-    close(historyFD);
+  }
+        if(lineLen > 0 && historyCount < historyBufferMaxSize)
+        {
+            line[lineLen] = '\0';
+            historyBuffer[historyCount] = strdup(line);
+            if (historyBuffer[historyCount] != NULL)
+            {
+                (historyCount)++;
+            }
+        }
+        historyBuffer[historyCount] = NULL;
+        close(historyFd);
+        
+        return historyCount;
 
 }
 
@@ -167,18 +207,18 @@ bool expandHistory(char userInput[], size_t userInputSize, int historyCount, cha
                 }
                 numStr[numPos] = '\0';
 
-                int targetIndex = atoi(numStr);
+                errno = 0;
+                char *endPtr = NULL;
+                long targetIndex = strtol(numStr, &endPtr, 10);
 
-                if(targetIndex > 0 && targetIndex <= historyCount)
-                {
-                    expansion = historyBuffer[targetIndex - 1];
-                    skipChars = numPos;
-                }
-                else
+                if (errno == ERANGE || endPtr == numStr || targetIndex <= 0 || targetIndex > historyCount)
                 {
                     printf("shell: !%s: not found\n", numStr);
                     return false;
                 }
+
+                expansion = historyBuffer[(int)targetIndex - 1];
+                skipChars = numPos;
             }
             if (expansion != NULL)
             {
@@ -200,9 +240,10 @@ bool expandHistory(char userInput[], size_t userInputSize, int historyCount, cha
                 }
             }
         }
+      
         else
         {
-            if (tempPosition < (int)sizeof(tempBuffer))
+            if (tempPosition < (int)sizeof(tempBuffer) - 1)
             {
                 tempBuffer[tempPosition++] = userInput[i];
             }

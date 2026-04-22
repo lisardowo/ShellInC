@@ -1,7 +1,7 @@
 #include <stdio.h>
 
 
-int main(int argc, char* argv[])
+int main(int argc, char* commandTokens[])
 {
     if (argc < 2)
     {
@@ -10,7 +10,7 @@ int main(int argc, char* argv[])
     }
     
     
-    printf("argument is : %s\n", argv[1]);
+    printf("argument is : %s\n", commandTokens[1]);
     
     
     return 0;

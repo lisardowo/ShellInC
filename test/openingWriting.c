@@ -7,13 +7,13 @@
 #include <stdio.h>
 #include <string.h>
 
-int main (int argc, char *argv[])
+int main (int argc, char *commandTokens[])
 {
 
 
     char testBuff[] = "hola";
 
-    int fd = creat(argv[1], 00700);
+    int fd = creat(commandTokens[1], 00700);
 
     int writecode = write(fd, testBuff , strlen(testBuff));
     

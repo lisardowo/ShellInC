@@ -1,140 +1,150 @@
 #include "arguments.h"
 
+#define temporalBuffer 4096
+
 char userInput[10000];
 
-static char argvStorage[10000];
-char *argv[1000];
+extern char **commandTokens = NULL;
+extern char commandTokensCapacity = 0;
 
-static char storage[1000];
-static int storage_position = 0;
 
-void argumentExtractor(char *userInput, int argumentCount)
+void resetCommandTokens()
 {
-
-	char token[1000];
-  int tokenLen = 0 ;
-  int argIndex = 0;
-  int storagePos = 0;
-
-  bool inSingle = false;
-  bool inDouble = false;
-  bool escaped = false;
-
-  int maxArgs = 99;
-
-  if (argumentCount > 0 && argumentCount < 100)
-  {
-    maxArgs = argumentCount;
-  }
-
-  for (int i = 0 ; ; i++)
-  {
-      bool endOfInput = (userInput[i] == '\0');
-      bool splitInPosition = (!endOfInput && userInput[i] == ' ' && !inSingle && !inDouble && !escaped);
-
-
-      if(endOfInput || splitInPosition)
-      {
-          if (escaped)
-          {
-              if(tokenLen < ((int)sizeof(token) - 1))
-              {
-                  token[tokenLen ++] = '\\';
-              }
-              escaped = false;
-          } 
-          if (tokenLen > 0 && argIndex < maxArgs)
-          {
-            token[tokenLen] = '\0';
-
-            if (storagePos + tokenLen + 1 >= (int)sizeof(argvStorage))
-            {
-              break;
-            }
-
-            argv[argIndex] = &argvStorage[storagePos];
-            memcpy(argv[argIndex], token, tokenLen + 1);
-            storagePos += tokenLen + 1;
-            argIndex++;
-            tokenLen = 0;
-          }
-
-          if(endOfInput)
-          {
-            break;
-          } 
-         
-          continue;
-      }
-      if (escaped)
-      {
-        if (inDouble)
+    if (commandTokens != NULL)
+    {
+        for ( int i = 0 ; commandTokens[i] != NULL ; i++)
         {
-          if (userInput[i] == '\"' || userInput[i] == '\\' || userInput[i] == '$' || userInput[i] == ' ' || userInput[i] == '\n')
-          {
-              if(tokenLen < ((int)sizeof(token) - 1))
-              {
-                token[tokenLen++] = userInput[i];
-              }
-          }
-          else 
-          {
-             if (tokenLen < ((int)sizeof(token) - 1))
-             {
-                token[tokenLen++] = '\\';
-             }
-             if (tokenLen < ((int)sizeof(token) - 1))
-             {
-                token[tokenLen++] = userInput[i];
-             }
-          }
+            free(commandTokens[i]);
         }
-        else 
+        free(commandTokens);
+        commandTokens = NULL;
+    }
+    commandTokensCapacity = 0;
+}
+
+void argumentExtractor(char *userInput)
+{
+    resetcommandTokens();
+    int argIndex = 0;
+    commandTokensCapacity = 10;
+    commandTokens = calloc(commandTokensCapacity, sizeof(char *));
+    char token[temporalBuffer];
+    int tokenLen = 0;
+    bool inSingle = false;
+    bool inDouble = false;
+    bool escaped = false;
+
+    for (int i = 0 ;; i++)
+    {
+        char c = userInput[i];
+        bool endOfInput = (c == '\0');
+        bool split = (!endOfInput && userInput[i] == ' ' && !inSingle && !inDouble && !escaped);
+
+        if(endOfInput || split)
         {
-          if(tokenLen < ((int)sizeof(token) - 1))
-          {
-              token[tokenLen ++] = userInput[i];
-          }
+            if (escaped)
+            {
+                if(tokenLen < (int)sizeof(token) - 1)
+                {
+                    token[tokenLen++] = '\\';
+                }
+                escaped = false;
+            }
+            if(tokenLen > 0 || inDouble || inSingle)
+            {
+                token[tokenLen] = '\0';
+                if (argIndex + 1 >= commandTokensCapacity)
+                {
+                    commandTokensCapacity *= 2;
+                    commandTokens = realloc(commandTokens, commandTokensCapacity * sizeof(char *));
+                }
+                commandTokens[argIndex++] = strdup(token);
+                tokenLen = 0;
+            }
+            if(endOfInput)
+            {
+                break;
+            }
+            continue;
         }
 
-        escaped = false;
-        continue;
-      }
-
-      if (userInput[i] == '\\')
-      {
-          if (inSingle)
-          {
-            if (tokenLen < (int)sizeof(token) - 1)
+        if(escaped)
+        {
+            if(inDouble)
             {
-                token[tokenLen ++] = '\\';
+                if(c == '"' || c == '\\' || c == '$' || c == '`' || c == '\n')
+                {
+                    if (tokenLen < (int)sizeof(token) - 1)
+                    {
+                        token[tokenLen++] = c;
+                    }
+                }
+                else
+                {
+                    if(tokenLen < (int)sizeof(token) - 1)
+                    {
+                        token[tokenLen++] = '\\';
+                    }
+                    if(tokenLen < (int)sizeof(token) - 1)
+                    {
+                        token[tokenLen++] = c;
+                    }
+                }
             }
-          }
-          else
-          {
-            escaped = true;
-          }
-          continue;
-      }
-      if (userInput[i] == '\"' && !inSingle)
-      {
-          inDouble = toogleState(inDouble);
-          continue;
-      }
+            else if (inSingle)
+            {
+                if (tokenLen < (int)sizeof(token) - 1)
+                {
+                    token[tokenLen++] = '\\';
+                }
+                if(tokenLen < (int)sizeof(token) - 1)
+                {
+                    token[tokenLen++] = c;
+                }
+            }
+            else
+            {
+                if(tokenLen < (int)sizeof(token) - 1)
+                {
+                    token[tokenLen++] = c;
+                }
+            }
 
-      if (userInput[i] == '\'' && !inDouble)
-      {
-          inSingle = toogleState(inSingle);
-          continue;
-      }
+            escaped = false;
+            continue;
+        }
 
-      if (tokenLen < (int)sizeof(token) - 1)
-      {
-          token[tokenLen ++] = userInput[i];
-      }
-
-  }
-  argv[argIndex] = NULL; // for vulnerable version, change this null for a fixed last element indicator string
+        if (c == '\\')
+        {
+            if(inSingle)
+            {
+                if (tokenLen < (int)sizeof(token) - 1)
+                {
+                    token[tokenLen++] = c;
+                }
+            }
+            else
+            {
+                escaped = true;
+            }
+            continue;
+        }
+        if (c == '"' && !inSingle)
+        {
+            inDouble = !inDouble;
+            continue;
+        }
+        if(c == '\'' && !inDouble)
+        {
+            inSingle = !inSingle;
+            continue;
+        }
+        if(tokenLen < (int)sizeof(token) - 1)
+        {
+            token[tokenLen++] = c;
+        }
+    }
+    commandTokens[argIndex] = NULL;
 }
 
 
@@ -214,8 +224,8 @@ bool toogleState(bool state)
 }
 
 
-static char *newArgv[1000];
-static char globStorage[20000];
+static char *newcommandTokens[1000];
+
 static int globStoragePosition = 0;
 
 static void resetGlobStorage()
@@ -223,31 +233,28 @@ static void resetGlobStorage()
     globStoragePosition = 0;
 }
 
-void expandGlobs(char *argv[])
+void expandGlobs(char *commandTokens[])
 {
     int newArgc = 0;
     resetGlobStorage();
 
-    for (int i = 0 ; argv[i] != NULL ; i++)
+    for (int i = 0 ; commandTokens[i] != NULL ; i++)
     {
-        if(strchr(argv[i], '*') != NULL || strchr(argv[i], '?') != NULL)
+        if(strchr(commandTokens[i], '*') != NULL || strchr(commandTokens[i], '?') != NULL)
         {
             glob_t globResult;
 
-            int result = glob(argv[i], GLOB_NOCHECK | GLOB_TILDE, NULL , &globResult);
+            int result = glob(commandTokens[i], GLOB_NOCHECK | GLOB_TILDE, NULL , &globResult);
 
             if (result == 0)
             {
                 for (size_t j = 0; j < globResult.gl_pathc ; j++)
                 {
-                    int len = strlen(globResult.gl_pathv[j]);
-
-                    if ((globStoragePosition + len) + 1 < (int)sizeof(globStorage) && newArgc < 99)
-                    {
-                        strcpy(&globStorage[globStoragePosition], globResult.gl_pathv[j]);
-                        newArgv[newArgc++] = &globStorage[globStoragePosition];
-                        globStoragePosition += len + 1;
-                    }
+                  char *copy = strdup(globResult.gl_pathv[j]);
+                  if(copy != NULL)
+                  {
+                    newcommandTokens[newArgc++] = copy;
+                  }
                 }
             }
             globfree(&globResult);
@@ -255,15 +262,29 @@ void expandGlobs(char *argv[])
         else
             {
 
-                newArgv[newArgc++] = argv[i];
+                newcommandTokens[newArgc++] = commandTokens[i];
            
             }
         }
-            newArgv[newArgc] = NULL;
+            newcommandTokens[newArgc] = NULL;
+            int originalArgc = 0;
+            while(commandTokens[originalArgc] != NULL)
+            {
+                originalArgc++;
+            }
+
+            for(int i = 0 ; i < originalArgc ; i++)
+            {
+                if (commandTokens[i] != NULL && (strchr(commandTokens[i], '*') != NULL || strchr(commandTokens[i], '?') != NULL))
+                {
+                    free(commandTokens[i]);
+                    commandTokens[i] = NULL;
+                }
+            }
 
             for (int i = 0 ; i <= newArgc ; i++)
             {
-                argv[i] = newArgv[i];
+                commandTokens[i] = newcommandTokens[i];
             }
 
         }
@@ -349,24 +370,17 @@ void restoreSpaces(char *userInput)
 	}
 }
 
-
-static void resetStorage_position() 
+void expandArguments(char *commandTokens[])
 {
-    storage_position = 0;
-}
 
-void expandArguments(char *argv[])
-{
-    resetStorage_position();
-
-    for(int i = 0 ; argv[i] != NULL; i++)
+    for(int i = 0 ; commandTokens[i] != NULL; i++)
     {
-        if (argv[i] == NULL)
+        if (commandTokens[i] == NULL)
         {
             continue;
         }
 
-        char *originalToken = argv[i];
+        char *originalToken = commandTokens[i];
         char tempBuffer[1000];
         int temp_position = 0;
         bool isExpandible = false;
@@ -418,12 +432,11 @@ void expandArguments(char *argv[])
 
                 if (isExpandible)
                 {
-                    int len = strlen(tempBuffer);
-                    if((storage_position + len) + 1 < (int)sizeof(storage))
+                    char *expandend = strdup(tempBuffer);
+                    if (expandend != NULL)
                     {
-                        strcpy(&storage[storage_position], tempBuffer);
-                        argv[i] = &storage[storage_position];
-                        storage_position += (len + 1);
+                        free(commandTokens[i]);
+                        commandTokens[i] = expandend;
                     }
                 }
 

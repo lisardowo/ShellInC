@@ -1,8 +1,8 @@
 
 #include "selfCompletion.h"
 
-
 static struct termios g_old;
+#define linuxMaxSize 4096
 
 bool startCommandsList(availableCommands *list)
 {
@@ -119,6 +119,11 @@ bool getBins(availableCommands *list)
 {
     char *path = getenv("PATH");
     
+    if (path == NULL)
+    {
+        return false;
+    }
+
     char *modifiabPath = strdup(path);
 
     char *ptr = NULL ;
@@ -236,7 +241,8 @@ size_t lengestCommonPrefix(char **matches, size_t count)
 
 size_t fileMatches(char *prefix, char ***matches)
 {
-    char dirPath[1024];
+ 
+    char dirPath[linuxMaxSize];
     char filePrefix[256];
 
     char *lastSlash = strrchr(prefix, '/');
@@ -244,56 +250,73 @@ size_t fileMatches(char *prefix, char ***matches)
     if (lastSlash != NULL)
     {
         int dirLen = lastSlash - prefix + 1;
+        if (dirLen >= (int)sizeof(dirPath))
+        {
+            dirLen = (int)sizeof(dirPath) - 1;
+        }
         strncpy(dirPath, prefix, dirLen);
         dirPath[dirLen] = '\0';
-        strcpy(filePrefix, lastSlash + 1);
+        strncpy(filePrefix, lastSlash + 1, sizeof(filePrefix) - 1);
+        filePrefix[sizeof(filePrefix) - 1] = '\0';
     }
     else
     {
         strcpy(dirPath, ".");
-        strcpy(filePrefix, prefix);
+        strncpy(filePrefix, prefix, sizeof(filePrefix) - 1);
+        filePrefix[sizeof(filePrefix) - 1] = '\0';
     }
-
     DIR *dir = opendir(dirPath);
     if (!dir)
     {
         *matches = NULL;
         return 0;
     }
+
     char *tempMatches[1000];
     size_t count = 0;
     struct dirent *entry;
+    size_t filePrefixLen = strlen(filePrefix);
 
-    while ((entry = readdir(dir)) != NULL)
+    while((entry = readdir(dir)) != NULL)
     {
         if (strcmp(entry->d_name, ".") == 0 || strcmp(entry->d_name, "..") == 0)
         {
             continue;
         }
-        if (strncmp(entry->d_name, filePrefix, strlen(filePrefix)) == 0)
+        if(strncmp(entry->d_name, filePrefix, filePrefixLen) != 0)
         {
-            char fullPath[2048];
-            if (lastSlash != NULL)
-            {
-                snprintf(fullPath, sizeof(fullPath), "%s%s", dirPath, entry->d_name);
-            }
-            else
-            {
-                strcpy(fullPath, entry->d_name);
-            }
-            struct stat st;
-            char statPath[2048];
+            continue;
+        }
 
-            snprintf(statPath, sizeof(statPath), "%s/%s", strcmp(dirPath, ".") == 0 ? ".": dirPath, entry->d_name);
-            if (stat(statPath, &st) == 0 && S_ISDIR(st.st_mode))
+        char fullPath[linuxMaxSize];
+        if(strcmp(dirPath, ".") == 0)
+        {
+            snprintf(fullPath, sizeof(fullPath), "%s", entry->d_name);
+        }
+        else
+        {
+            size_t maxCopy = sizeof(fullPath) - 1;
+            strncpy(fullPath, dirPath, maxCopy);
+            fullPath[maxCopy] = '\0';
+            strncat(fullPath, entry->d_name, maxCopy - strlen(fullPath));
+            
+        }
+
+        struct stat st;
+
+        if(stat(fullPath, &st) == 0 && S_ISDIR(st.st_mode))
+        {
+            size_t len = strlen(fullPath);
+            if(len + 1 < sizeof(fullPath))
             {
-                strcat(fullPath, "/");
+                fullPath[len] = '/';
+                fullPath[len + 1] = '\0';
             }
-            if (count < 1000)
-            {
-                tempMatches[count++] = strdup(fullPath);
-            }
-        }   
+        }
+        if (count < 1000)
+        {
+            tempMatches[count++] = strdup(fullPath);
+        }
     }
 
     closedir(dir);
@@ -305,15 +328,25 @@ size_t fileMatches(char *prefix, char ***matches)
     }
 
     char **finalMatches = malloc(count * sizeof(char *));
+    if(finalMatches == NULL)
+    {
+        for (size_t i = 0 ; i < count ; i++)
+        {
+            free(tempMatches[i]);    
+        }
+        *matches = NULL;
+        return 0;
+    }
+
     for (size_t i = 0 ; i < count ; i++)
     {
         finalMatches[i] = tempMatches[i];
     }
-
+    
     *matches = finalMatches;
     return count;
-}
 
+}
 bool enableRaw(void)
 {
     if(tcgetattr(STDIN_FILENO, &g_old) == - 1)

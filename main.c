@@ -1,7 +1,8 @@
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
 #include <unistd.h>
+
+#define MAX_SEGMENTS 100
+#define MAX_ARGS_PER_SEG 100
+#define MAX_PIPELINES 100
 
 #include "proccesess.h"
 #include "pipeline.h"
@@ -11,9 +12,12 @@
 #include "history.h"
 #include "commands.h"
 
-void createPrompt();
+//TODO bug: cuando pegas cosas con comillas, el auto completado detecta las comillas y las cierra automaticamente (Se debe asumir que si lo esta pegando el usuario, es por que ya no necesita autocompletar)
+//TODO jump between words when ctrl + arrow are detected
+
+
 void REPL();
-char *historyBuffer[10000];
+char *historyBuffer[10000]; 
 int historyCount;
 char prompt[1024];
 
@@ -40,17 +44,14 @@ int main()
 
 void REPL()
 {
-  
   availableCommands commandsList;
   fillCommands(&commandsList);
-  getHistory(&historyCount, historyBuffer);
+  historyCount = getHistory(historyBuffer);
 
   while (true)
   {
-
     createPrompt();
     //set up
-    memset(argv,0,sizeof(argv));
     int argumentCount = 0;
 
     bool redirectedstdout = false;
@@ -65,9 +66,8 @@ void REPL()
     int segment = 0;
     int position = 0;
 
-    char *pipelines[100][100][100];
-    int pipelineSegment[100];
-    segmentType pipeLineConditionals[100];
+    int pipelineSegment[MAX_PIPELINES]; 
+    segmentType pipeLineConditionals[MAX_PIPELINES];
 
     int pipelineCount = 0;
     int commandInScope = 0;
@@ -84,110 +84,105 @@ void REPL()
 
     addHistory(userInput, &historyCount, historyBuffer);
     argumentCounter(userInput, &argumentCount);
-    argumentExtractor(userInput, argumentCount);
-    
+    argumentExtractor(userInput);
 
-    expandArguments(argv);
-    expandGlobs(argv);
-      
+    expandArguments(commandTokens);
+    expandGlobs(commandTokens);
+
     bool toBackgrund = false;
 
     if (argumentCount > 0)
     {
       int lastIndex = 0;
-      while(argv[lastIndex + 1] != NULL )
+      while(commandTokens[lastIndex + 1] != NULL )
       {
         lastIndex++;
       }
-      if(strcmp(argv[lastIndex], "&") == 0)
+      if(strcmp(commandTokens[lastIndex], "&") == 0)
       {
         toBackgrund = true;
-        argv[lastIndex] = false;
+        commandTokens[lastIndex] = false;
       }
     }
 
     checkBacktroundJobs();
 
-    char *segments[100][100];
-    segmentType typeOfSegment[100];
+    char *segments[MAX_SEGMENTS][MAX_ARGS_PER_SEG];
+    segmentType typeOfSegment[MAX_SEGMENTS];
 
- 
-
-    if (argv[0] == NULL)
+    if (commandTokens[0] == NULL)
     {
       continue;
     }
 
-  for(int i = 0 ; argv[i] != NULL ; i++)
-  {
-    //echo  >   eas 2>  ead
-    //tok0 op0  tok1 op1 tok2
-    //ls -lh > test.txt
-    //tok tok op tok
-   
-    if (strcmp(argv[i], ">") == 0 || strcmp(argv[i], "1>") == 0)
+    for(int i = 0 ; commandTokens[i] != NULL ; i++)
+    {
+      //echo  >   eas 2>  ead
+      //tok0 op0  tok1 op1 tok2
+      //ls -lh > test.txt
+      //tok tok op tok
+
+      if (strcmp(commandTokens[i], ">") == 0 || strcmp(commandTokens[i], "1>") == 0)
       {
-        if (argv[i + 1] == NULL)
+        if (commandTokens[i + 1] == NULL)
         {
           printf("syntax error: expected file after '>'\n");
           redirectedstdout = false;
           stdoutPath = NULL;
-          break ;          
+          break;
         }
         else
         {
-
           redirectedstdout = true;
-          stdoutPath = argv[i + 1];
+          stdoutPath = commandTokens[i + 1];
 
           i++;
           continue;
         }
-         
+
       }
-      else if (strcmp(argv[i], "2>") == 0)
+      else if (strcmp(commandTokens[i], "2>") == 0)
       {
-        if (argv[i + 1] == NULL)
+        if (commandTokens[i + 1] == NULL)
         {
-          
           printf("syntax error: expected file after '2>'\n");
           redirectedstderr = false;
           stderrPath = NULL;
-          break ;          
-       
+          break;
+
         }
         else
         {
-        
+
           redirectedstderr = true;
-          stderrPath = argv[i + 1];
+          stderrPath = commandTokens[i + 1];
           i++;
           continue;
 
         }
       }
-      else if (strcmp(argv[i], ">>") == 0) // appendstdout
+      else if (strcmp(commandTokens[i], ">>") == 0) // appendstdout
       {
-        if (argv[i + 1] == NULL)
+        if (commandTokens[i + 1] == NULL)
         {
           printf("syntax error: expected file after '>>'\n");
           appendStdOut = false;
-          stdoutAppendPath = NULL;   
-          break;    
+          stdoutAppendPath = NULL;
+          break;
         }
         else
-        { 
+        {
 
           appendStdOut = true;
-          stdoutAppendPath = argv[i + 1];
+          stdoutAppendPath = commandTokens[i + 1];
           i++;
           continue;
 
         }
       }
-      else if (strcmp(argv[i], "2>>") == 0) // appendstderr
+      else if (strcmp(commandTokens[i], "2>>") == 0) // appendstderr
       {
-        if (argv[i + 1] == NULL)
+        if (commandTokens[i + 1] == NULL)
         {
           printf("syntax error: expected file after '2>>'\n");
           appendStdErr = false;
@@ -196,24 +191,23 @@ void REPL()
         }
         else
         {
-          
+
           appendStdErr = true;
-          stderrAppendPath = argv[i + 1];
+          stderrAppendPath = commandTokens[i + 1];
           i++;
           continue;
-        
-        }
-        
-      }
-      
 
-       else if (strcmp(argv[i], "&&") == 0)
+        }
+
+      }
+
+      else if (strcmp(commandTokens[i], "&&") == 0)
       {
-        if (argv[i + 1] == NULL)
+        if (commandTokens[i + 1] == NULL)
         {
-          printf("Esto deberia dejar escribir en multiples lineas\n");
+          printf("Esto deberia dejar escribir en multiples lineas\n"); 
           break;
-                 
+
         }
 
         if (position == 0 )
@@ -222,23 +216,28 @@ void REPL()
           break;
         }
 
+        if (segment >= MAX_SEGMENTS - 1)
+        {
+          fprintf(stderr, "shell: too many pipeline segments (max %d)\n", MAX_SEGMENTS - 1);
+          goto next_iteration;
+        }
 
         segments[segment][position] = NULL;
         typeOfSegment[segment] = AND;
         segment ++;
         position = 0;
-        
+
         continue;
 
       }
 
-      else if (strcmp(argv[i], "||") == 0)
+      else if (strcmp(commandTokens[i], "||") == 0)
       {
-        if (argv[i + 1] == NULL)
+        if (commandTokens[i + 1] == NULL)
         {
-          printf("Esto deberia dejar escribir en multiples lineas\n");
+          printf("Esto deberia dejar escribir en multiples lineas\n"); 
           break;
-                 
+
         }
 
         if (position == 0 )
@@ -247,22 +246,28 @@ void REPL()
           break;
         }
 
+        if (segment >= MAX_SEGMENTS - 1)
+        {
+          fprintf(stderr, "shell: too many pipeline segments (max %d)\n", MAX_SEGMENTS - 1);
+          goto next_iteration;
+        }
+
         segments[segment][position] = NULL;
         typeOfSegment[segment] = OR;
         segment ++;
         position = 0;
-        
+
         continue;
 
       }
 
-      else if (strcmp(argv[i], "|") == 0)
+      else if (strcmp(commandTokens[i], "|") == 0)
       {
-        if (argv[i + 1] == NULL)
+        if (commandTokens[i + 1] == NULL)
         {
-          printf("Esto deberia dejar escribir en multiples lineas\n");
+          printf("Esto deberia dejar escribir en multiples lineas\n"); 
           break;
-                 
+
         }
 
         if (position == 0 )
@@ -271,139 +276,167 @@ void REPL()
           break;
         }
 
+        if (segment >= MAX_SEGMENTS - 1)
+        {
+          fprintf(stderr, "shell: too many pipeline segments (max %d)\n", MAX_SEGMENTS - 1);
+          goto next_iteration;
+        }
+
         segments[segment][position] = NULL;
         typeOfSegment[segment] = PIPE;
         segment ++;
         position = 0;
-        
+
         continue;
 
       }
 
+      segments[segment][position++] = commandTokens[i];
 
-  segments[segment][position++] = argv[i];
-
-}
-
-//for (int i = 0 ; commandToken[i] != NULL ; i++ ) printf("%s", commandToken[i]);;
-  segments[segment][position] = NULL;
-  typeOfSegment[segment] = NONE;
-
-  int segmentCount = segment + 1;
-
-
-  for (int i = 0 ; i < segmentCount ; i++)
-  {
-    int currentArgument = 0;
-    while (segments[i][currentArgument] != NULL)
-    {
-      pipelines[pipelineCount][commandInScope][currentArgument] = segments[i][currentArgument];
-      currentArgument++;
-    }
-    pipelines[pipelineCount][commandInScope][currentArgument] = NULL;
-    commandInScope++;
-
-    if(typeOfSegment[i] == PIPE)
-    {
-      continue;
-    }
-    pipelineSegment[pipelineCount] = commandInScope;
-    pipeLineConditionals[pipelineCount] = typeOfSegment[i];
-    pipelineCount++;
-    commandInScope = 0;
-  }
-
-  int lastStatus = 0 ;
-  segmentType prevConditional = NONE;
-
-  for (int v = 0 ; v < pipelineCount ; v++)
-  {
-    
-    if (v > 0)
-    {
-      if (prevConditional == AND && lastStatus != 0)
+      if (segment >= MAX_SEGMENTS - 1)
       {
-        prevConditional = pipeLineConditionals[v];
+        fprintf(stderr, "shell: too many pipeline segments (max %d)\n", MAX_SEGMENTS - 1);
+        goto next_iteration;
+      }
+      if (position >= MAX_ARGS_PER_SEG - 1)
+      {
+        fprintf(stderr, "shell: too many arguments in segment (max %d)\n", MAX_ARGS_PER_SEG - 1);
+        goto next_iteration;
+      }
+    }
+
+    segments[segment][position] = NULL;
+    typeOfSegment[segment] = NONE;
+
+    int segmentCount = segment + 1;
+    char *(*pipelines)[100][100] = calloc(100, sizeof(*pipelines));
+    if( pipelines == NULL)
+    {
+      printf("shell: Out of memory\n");
+      exit(1);
+    }
+
+    for (int i = 0 ; i < segmentCount ; i++)
+    {
+
+      int currentArgument = 0;
+      while (segments[i][currentArgument] != NULL)
+      {
+        pipelines[pipelineCount][commandInScope][currentArgument] = segments[i][currentArgument];
+        currentArgument++;
+      }
+      pipelines[pipelineCount][commandInScope][currentArgument] = NULL;
+      commandInScope++;
+
+      if(typeOfSegment[i] == PIPE)
+      {
         continue;
       }
-      if (prevConditional == OR && lastStatus == 0)
-      {
-        prevConditional = pipeLineConditionals[v];
-        continue;
-      }
+      pipelineSegment[pipelineCount] = commandInScope;
+      pipeLineConditionals[pipelineCount] = typeOfSegment[i];
+      pipelineCount++;
+      commandInScope = 0;
     }
 
-    if (pipelineSegment[v] > 1)
+    int lastStatus = 0;
+    segmentType prevConditional = NONE;
+    bool shouldExit = false;
+
+    for (int v = 0 ; v < pipelineCount ; v++)
     {
-      lastStatus = runPipeline(toBackgrund,argv, pipelines[v], pipelineSegment[v], historyBuffer , redirectedstdout, redirectedstderr, appendStdOut, appendStdErr, stdoutPath, stderrPath, stdoutAppendPath , stderrAppendPath);
-    }
-    else
-    {
-      char **current = pipelines[v][0];
 
-      if(current[0] == NULL)
+      if (v > 0)
       {
-        lastStatus = 1;
+        if (prevConditional == AND && lastStatus != 0)
+        {
+          prevConditional = pipeLineConditionals[v];
+          continue;
+        }
+        if (prevConditional == OR && lastStatus == 0)
+        {
+          prevConditional = pipeLineConditionals[v];
+          continue;
+        }
       }
 
-      if(strcmp("exit", current[0]) == 0)
+      if (pipelineSegment[v] > 1)
       {
-        dumpHistory(historyBuffer);
-        return;
+        char **current = pipelines[v][0];
+        if(current[0] == NULL)
+        {
+          lastStatus  = 1;
+          continue;
+        }
+        lastStatus = runPipeline(toBackgrund,commandTokens, pipelines[v], pipelineSegment[v], historyBuffer , redirectedstdout, redirectedstderr, appendStdOut, appendStdErr, stdoutPath, stderrPath, stdoutAppendPath , stderrAppendPath);
       }
-
-
-      else if(strcmp("echo", current[0]) == 0 )
-      {
-        lastStatus = echo(current, redirectedstdout, appendStdOut , stdoutPath, stdoutAppendPath);
-      }
-
-      else if(strcmp("cd", current[0]) == 0)
-      {
-      
-      lastStatus = cd(current, redirectedstdout, appendStdOut , stdoutPath, stdoutAppendPath);
-
-      }
-
-
-      else if(strcmp("pwd", current[0]) == 0 )
-      {
-
-        lastStatus = pwd(redirectedstdout, appendStdOut , stdoutPath, stdoutAppendPath);
-    
-      }
-
-
-      else if(strcmp("history", current[0]) == 0 )
-      {
-       
-        lastStatus = history(current, historyBuffer, redirectedstdout , appendStdOut, stdoutPath, stdoutAppendPath);
-      
-      }
-
-      else if(strcmp("type", current[0]) == 0 )
-      {      
-       
-        lastStatus = type(current, redirectedstdout, redirectedstderr, appendStdOut, appendStdErr, stdoutPath, stderrPath, stdoutAppendPath, stderrAppendPath) ;
-    
-      }
-      
-      else if(strcmp("jobs", current[0]) == 0 )
-      {      
-       
-        lastStatus = jobs(jobList, redirectedstdout, appendStdOut, stdoutPath, stdoutAppendPath) ;
-    
-      }
-
       else
       {
-        lastStatus = executeBin(toBackgrund, stdoutPath, stderrPath, stdoutAppendPath, stderrAppendPath, redirectedstdout, redirectedstderr, appendStdOut, appendStdErr, current);
-      }
-    }
-   
-    prevConditional = pipeLineConditionals[v];
+        char **current = pipelines[v][0];
 
+        if(current[0] == NULL)
+        {
+          lastStatus = 1;
+          continue;
+        }
+
+        if(strcmp("exit", current[0]) == 0)
+        {
+          shouldExit = true;
+          break;
+        }
+
+        else if(strcmp("echo", current[0]) == 0 )
+        {
+          lastStatus = echo(current, redirectedstdout, appendStdOut , stdoutPath, stdoutAppendPath);
+        }
+
+        else if(strcmp("cd", current[0]) == 0)
+        {
+          lastStatus = cd(current, redirectedstdout, appendStdOut , stdoutPath, stdoutAppendPath);
+        }
+
+        else if(strcmp("pwd", current[0]) == 0 )
+        {
+          lastStatus = pwd(redirectedstdout, appendStdOut , stdoutPath, stdoutAppendPath);
+        }
+
+        else if(strcmp("history", current[0]) == 0 )
+        {
+          lastStatus = history(current, historyBuffer, redirectedstdout , appendStdOut, stdoutPath, stdoutAppendPath);
+        }
+
+        else if(strcmp("type", current[0]) == 0 )
+        {
+          lastStatus = type(current, redirectedstdout, redirectedstderr, appendStdOut, appendStdErr, stdoutPath, stderrPath, stdoutAppendPath, stderrAppendPath);
+        }
+
+        else if(strcmp("jobs", current[0]) == 0 )
+        {
+          lastStatus = jobs(jobList, redirectedstdout, appendStdOut, stdoutPath, stdoutAppendPath);
+        }
+
+        else
+        {
+          lastStatus = executeBin(toBackgrund, stdoutPath, stderrPath, stdoutAppendPath, stderrAppendPath, redirectedstdout, redirectedstderr, appendStdOut, appendStdErr, current);
+        }
+      }
+
+      prevConditional = pipeLineConditionals[v];
+    }
+
+    free(pipelines);
+
+    if (shouldExit)
+    {
+      break;
+    }
+    continue;
+
+next_iteration:
+    free(pipelines);
   }
 
-}
+  commandsFree(&commandsList);
+  dumpHistory(historyBuffer);
+  historyBufferFree(historyBuffer);
 }

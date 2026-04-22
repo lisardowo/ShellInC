@@ -1,6 +1,7 @@
 #include "proccesess.h"
 #include "commands.h"
 
+#define MAX_PIPELINE_PROCS 100
 job jobList[maxJobs];
 static int nextJobId = 1;
 
@@ -29,8 +30,8 @@ void restoreSignalsInChild()
     sigemptyset(&defaultAction.sa_mask);
     
     sigaction(SIGINT, &defaultAction, NULL);
-    sigaction(SIGINT, &defaultAction, NULL);
-    sigaction(SIGINT, &defaultAction, NULL);
+    sigaction(SIGQUIT, &defaultAction, NULL);
+    sigaction(SIGTSTP, &defaultAction, NULL);
 
 }
 
@@ -66,13 +67,14 @@ void removeJob(pid_t pid)
         if(jobList[i].running && jobList[i].pid == pid)
         {
             jobList[i].running = false;
-            bool emptyList = false ;
+            bool emptyList = true;
 
             for (int j = 0 ; j < maxJobs ; j++)
             {
-                if(jobList[i].running)
+                if(jobList[j].running)
                 {
                     emptyList = false;
+                    break;
                 }
             }
             if (emptyList)
@@ -153,7 +155,7 @@ int reddirectInChild(bool redirectedStdOut, bool redirectedStdErr, bool appendSt
     return 0;
 } 
 
-int runBuiltin(char *argv[], char **current, char **historyBuffer,bool redirectedStdOut, bool redirectedStdErr, bool appendStdOuut, bool appendStdErr,char *stdOutPath, char *stdErrPath, char *stdoutAppendPath, char *stderrAppendPath)
+int runBuiltin(char *commandTokens[], char **current, char **historyBuffer,bool redirectedStdOut, bool redirectedStdErr, bool appendStdOuut, bool appendStdErr,char *stdOutPath, char *stdErrPath, char *stdoutAppendPath, char *stderrAppendPath)
 {
     if (strcmp("echo", current[0]) == 0 )
     {
@@ -169,7 +171,7 @@ int runBuiltin(char *argv[], char **current, char **historyBuffer,bool redirecte
     }
     if (strcmp("history", current[0]) == 0 )
     {
-        return history(argv, historyBuffer, redirectedStdOut,  appendStdOuut, stdOutPath, stdoutAppendPath);
+        return history(commandTokens, historyBuffer, redirectedStdOut,  appendStdOuut, stdOutPath, stdoutAppendPath);
     }
     if (strcmp("type", current[0]) == 0 )
     {
@@ -178,7 +180,7 @@ int runBuiltin(char *argv[], char **current, char **historyBuffer,bool redirecte
   return 1 ;
 }
 
-int runBuiltinChild(char *argv[],char **current, char **historyBuffer,bool redirectedStdOut, bool redirectedStdErr, bool appendStdOuut, bool appendStdErr,char *stdOutPath, char *stdErrPath, char *stdoutAppendPath, char *stderrAppendPath)
+int runBuiltinChild(char *commandTokens[],char **current, char **historyBuffer,bool redirectedStdOut, bool redirectedStdErr, bool appendStdOuut, bool appendStdErr,char *stdOutPath, char *stdErrPath, char *stdoutAppendPath, char *stderrAppendPath)
 {
     if(strcmp("echo", current[0]) == 0)
     {
@@ -190,7 +192,7 @@ int runBuiltinChild(char *argv[],char **current, char **historyBuffer,bool redir
     }
     if(strcmp("history", current[0]) == 0)
     {
-        return history(argv, historyBuffer, redirectedStdOut,  appendStdOuut, stdOutPath, stdoutAppendPath);
+        return history(commandTokens, historyBuffer, redirectedStdOut,  appendStdOuut, stdOutPath, stdoutAppendPath);
     }
     if(strcmp("type", current[0]) == 0)
     {
@@ -232,13 +234,14 @@ int externalInChild(char **current, bool redirectedStdErr, bool appendStdErr, ch
         return 127;
     }
     execv(binPath, current);
+    free(binPath);
     return 126;
 }
 
-int runPipeline(bool toBackground, char *argv[],char *commands[100][100], int commandCount, char **historyBuffer, bool redirectedstdout, bool redirectedstderr, bool appendStdOut, bool appendStdErr, char *stdoutPath, char *stderrPath, char *stdoutAppendPath, char *stderrAppendPath)
+int runPipeline(bool toBackground, char *commandTokens[],char *commands[100][100], int commandCount, char **historyBuffer, bool redirectedstdout, bool redirectedstderr, bool appendStdOut, bool appendStdErr, char *stdoutPath, char *stderrPath, char *stdoutAppendPath, char *stderrAppendPath)
 {
-    int prev_pipe_read_end = -1;
-    pid_t pids[100];
+    int prevPipeReadEnd = -1;
+    pid_t pids[MAX_PIPELINE_PROCS];
     int pidCount = 0;
 
     for (int i = 0; i < commandCount; i++)
@@ -254,6 +257,16 @@ int runPipeline(bool toBackground, char *argv[],char *commands[100][100], int co
             }
         }
 
+        if (pidCount >= MAX_PIPELINE_PROCS)
+        {
+            fprintf(stderr, "shell: too many processes in pipeline (max %d)\n", MAX_PIPELINE_PROCS);
+            if (prevPipeReadEnd != -1 )
+            {
+                close(prevPipeReadEnd);
+                break;
+            }
+        }
+
         pid_t pid = fork();
         if (pid == -1)
         {
@@ -265,10 +278,10 @@ int runPipeline(bool toBackground, char *argv[],char *commands[100][100], int co
 
             restoreSignalsInChild();
         
-            if (prev_pipe_read_end != -1)
+            if (prevPipeReadEnd != -1)
             {
-                dup2(prev_pipe_read_end, STDIN_FILENO);
-                close(prev_pipe_read_end);
+                dup2(prevPipeReadEnd, STDIN_FILENO);
+                close(prevPipeReadEnd);
             }
 
             if (!is_last_command)
@@ -287,7 +300,7 @@ int runPipeline(bool toBackground, char *argv[],char *commands[100][100], int co
                 }
             }
             
-            int status = runBuiltinChild(argv, commands[i], historyBuffer, redirectedstdout, redirectedstderr, appendStdOut, appendStdErr, stdoutPath, stderrPath, stdoutAppendPath, stderrAppendPath);
+            int status = runBuiltinChild(commandTokens, commands[i], historyBuffer, redirectedstdout, redirectedstderr, appendStdOut, appendStdErr, stdoutPath, stderrPath, stdoutAppendPath, stderrAppendPath);
             if (status == 1)
             { 
                 status = externalInChild(commands[i], redirectedstderr, appendStdErr, stderrPath, stderrAppendPath);
@@ -299,15 +312,15 @@ int runPipeline(bool toBackground, char *argv[],char *commands[100][100], int co
         
             pids[pidCount++] = pid;
 
-            if (prev_pipe_read_end != -1)
+            if (prevPipeReadEnd != -1)
             {
-                close(prev_pipe_read_end);
+                close(prevPipeReadEnd);
             }
     
             if (!is_last_command)
             {
                 close(fds[1]); 
-                prev_pipe_read_end = fds[0];
+                prevPipeReadEnd = fds[0];
             }
         }
 
