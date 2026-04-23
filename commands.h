@@ -7,18 +7,18 @@
 #include <stdio.h>
 #include <unistd.h>
 #include <sys/wait.h>
-#include "job.h"
+#include "definitions.h"
 #include "arguments.h"
 #include "utils.h"
-#include "job.h"
+#include "definitions.h"
 
-extern char binPath[100000];
+extern char binPath[MAX_LINUX_SIZE];
 
-int type(char **current, bool redirectedstdout ,bool redirectedstderr, bool appendStdOut, bool appendStdErr, char *stdoutPath, char *stderrPath , char *stdoutAppendPath, char *stderrAppendPath );
-int history(char **current, char *historyBuffer[], bool redirectedstdout, bool appendStdOut,  char *stdoutPath, char *stdoutAppendPath);
-int echo(char **current, bool redirectedstdout,  bool appendStdOut, char *stdoutPath,  char *stdoutAppendPath);
-int cd(char **current, bool redirectedstderr, bool appendStdErr, char *stderrPath, char *stderrAppendPath);
-int pwd( bool redirectedstdout, bool appendStdOut, char *stdoutPath,  char *stdoutAppendPath);
-int jobs(job *jobList, bool redirectedstdout, bool appendStdOut, char *stdoutPath,  char *stdoutAppendPath);
-char* getPath(char *command);
-int executeBin(bool toBackground, char *stdoutPath,char *stdErrPath,char *stdOutAppendPath, char *stdErrAppendPath, bool redirectedstdout, bool redirectedStdErr, bool appendStdOut, bool appendStdErr, char *tokens[]);
+
+int executeBin(bool toBackground, const redirectConfig *redirect , char *tokens[]);
+int history(char **current, char *historyBuffer[], const redirectConfig *redirect);
+int pwd(const redirectConfig *redirect);
+int cd(char **current, const redirectConfig *redirect);
+int echo(char **current, const redirectConfig *redirect);
+int jobs(job *jobList, const redirectConfig *redirect);
+int type(char **current, const redirectConfig *redirect);

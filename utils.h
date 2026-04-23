@@ -7,7 +7,7 @@
 #include <unistd.h>
 
 bool isOperator(char *token);
-void createPrompt();
+void createPrompt(char *prompt, size_t promptSize);
 int getFileDescriptor(const char* descriptorTarget, int flags);
 char* getPath(char *command);
 void historyBufferFree(char *historyBuffer[]);

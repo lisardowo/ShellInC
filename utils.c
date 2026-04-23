@@ -3,17 +3,16 @@
 #include "utils.h"
 
 char binPath[100000]; 
-extern char prompt[1024];
 #define generalPermissions 0644
 
-void createPrompt()
+void createPrompt(char *prompt, size_t promptSize)
 {
 
   char cwd[4096];
 
   if (getcwd(cwd, sizeof(cwd)) == NULL)
   {
-    snprintf(prompt,sizeof(prompt), "$ ");
+    snprintf(prompt, promptSize, "$ ");
     return;
   }
 
@@ -34,15 +33,15 @@ void createPrompt()
 
   if (count >= 2)
   {
-    snprintf(prompt, sizeof(prompt), "%s/%s $ ", parts[count - 2] , parts[count - 1]);
+    snprintf(prompt, promptSize, "%s/%s $ ", parts[count - 2] , parts[count - 1]);
   }
   else if (count == 1)
   {
-    snprintf(prompt, sizeof(prompt), "%s $ ", parts[0]);
+    snprintf(prompt, promptSize, "%s $ ", parts[0]);
   }
   else
   {
-    snprintf(prompt, sizeof(prompt), "$ ");
+    snprintf(prompt, promptSize, "$ ");
   }
 
 }

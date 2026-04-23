@@ -5,6 +5,7 @@
 job jobList[maxJobs];
 static int nextJobId = 1;
 
+
 void ignoreSignalsInParent()
 {
 
@@ -110,11 +111,11 @@ void checkBacktroundJobs()
 }
 
 
-int reddirectInChild(bool redirectedStdOut, bool redirectedStdErr, bool appendStdOuut, bool appendStdErr,char *stdOutPath, char *stdErrPath, char *stdoutAppendPath, char *stderrAppendPath)
+int reddirectInChild(redirectConfig *redirect)
 {
-    if (redirectedStdOut)
+    if (redirect->redirectStdout)
     {
-        int fd = getFileDescriptor(stdOutPath, O_TRUNC | O_CREAT | O_WRONLY);
+        int fd = getFileDescriptor(redirect->stdOutPath, O_TRUNC | O_CREAT | O_WRONLY);
         if (fd < 0)
         {
             return 1;
@@ -122,9 +123,9 @@ int reddirectInChild(bool redirectedStdOut, bool redirectedStdErr, bool appendSt
         dup2(fd, STDOUT_FILENO);
         close(fd);
     }
-    if (appendStdOuut)
+    if (redirect->appendStdout)
     {
-        int fd = getFileDescriptor(stdoutAppendPath, O_APPEND | O_CREAT | O_WRONLY);
+        int fd = getFileDescriptor(redirect->stdoutAppendPath, O_APPEND | O_CREAT | O_WRONLY);
         if (fd < 0 )
         {
             return 1;
@@ -132,9 +133,9 @@ int reddirectInChild(bool redirectedStdOut, bool redirectedStdErr, bool appendSt
         dup2(fd , STDOUT_FILENO);
         close(fd);
     }
-    if(redirectedStdErr)
+    if(redirect->redirectStderr)
     {
-        int fd = getFileDescriptor(stdErrPath, O_TRUNC | O_CREAT | O_WRONLY);
+        int fd = getFileDescriptor(redirect->stdErrPath, O_TRUNC | O_CREAT | O_WRONLY);
         if (fd < 0 )
         {
             return 1 ;
@@ -142,9 +143,9 @@ int reddirectInChild(bool redirectedStdOut, bool redirectedStdErr, bool appendSt
         dup2(fd, STDERR_FILENO);
         close(fd);
     }
-    if (appendStdErr)
+    if (redirect->appendStderr)
     {
-        int fd = getFileDescriptor(stderrAppendPath, O_APPEND | O_CREAT | O_WRONLY);
+        int fd = getFileDescriptor(redirect->stderrAppendPath, O_APPEND | O_CREAT | O_WRONLY);
         if (fd < 0)
         {
             return 1 ;
@@ -155,48 +156,48 @@ int reddirectInChild(bool redirectedStdOut, bool redirectedStdErr, bool appendSt
     return 0;
 } 
 
-int runBuiltin(char *commandTokens[], char **current, char **historyBuffer,bool redirectedStdOut, bool redirectedStdErr, bool appendStdOuut, bool appendStdErr,char *stdOutPath, char *stdErrPath, char *stdoutAppendPath, char *stderrAppendPath)
+int runBuiltin(char **current, redirectConfig *redirect, char *historyBuffer[])
 {
     if (strcmp("echo", current[0]) == 0 )
     {
-        return echo(current, redirectedStdOut,  appendStdOuut, stdOutPath, stdoutAppendPath);
+        return echo(current, redirect );
     }
     if (strcmp("cd", current[0]) == 0 )
     {
-        return cd(current, redirectedStdErr,  appendStdErr, stdErrPath, stderrAppendPath);
+        return cd(current, redirect);
     }
     if (strcmp("pwd", current[0]) == 0 )
     {
-        return pwd(redirectedStdOut,  appendStdOuut, stdOutPath, stdoutAppendPath);
+        return pwd(redirect);
     }
     if (strcmp("history", current[0]) == 0 )
     {
-        return history(commandTokens, historyBuffer, redirectedStdOut,  appendStdOuut, stdOutPath, stdoutAppendPath);
+        return history(current, historyBuffer,redirect);
     }
     if (strcmp("type", current[0]) == 0 )
     {
-        return type(current, redirectedStdOut, redirectedStdErr, appendStdOuut, appendStdErr, stdOutPath, stdErrPath, stdoutAppendPath, stderrAppendPath);
+        return type(current, redirect);
     }
   return 1 ;
 }
 
-int runBuiltinChild(char *commandTokens[],char **current, char **historyBuffer,bool redirectedStdOut, bool redirectedStdErr, bool appendStdOuut, bool appendStdErr,char *stdOutPath, char *stdErrPath, char *stdoutAppendPath, char *stderrAppendPath)
+int runBuiltinChild(char **current, redirectConfig *redirect, char *historyBuffer[])
 {
     if(strcmp("echo", current[0]) == 0)
     {
-        return echo(current, redirectedStdOut,  appendStdOuut, stdOutPath, stdoutAppendPath);
+        return echo(current, redirect);
     }
     if(strcmp("pwd", current[0]) == 0)
     {
-        return pwd(redirectedStdOut,  appendStdOuut, stdOutPath, stdoutAppendPath);
+        return pwd(redirect);
     }
     if(strcmp("history", current[0]) == 0)
     {
-        return history(commandTokens, historyBuffer, redirectedStdOut,  appendStdOuut, stdOutPath, stdoutAppendPath);
+        return history(current, historyBuffer, redirect);
     }
     if(strcmp("type", current[0]) == 0)
     {
-        return type(current, redirectedStdOut , redirectedStdErr, appendStdOuut, appendStdErr, stdOutPath, stdErrPath, stdoutAppendPath, stderrAppendPath);
+        return type(current, redirect);
     }
     if(strcmp("cd", current[0]) == 0 || strcmp("exit", current[0]) == 0)
     {
@@ -206,23 +207,23 @@ int runBuiltinChild(char *commandTokens[],char **current, char **historyBuffer,b
     return 1;
 }
 
-int externalInChild(char **current, bool redirectedStdErr, bool appendStdErr, char *stdErrPath, char* stdErrAppendPath)
+int externalInChild(char **current, redirectConfig *redirect)
 {
     char *binPath = getPath(current[0]);
     if (binPath == NULL)
     {
 
-        if(redirectedStdErr)
+        if(redirect->redirectStderr)
         {
-            int fd = getFileDescriptor(stdErrPath, O_TRUNC | O_CREAT | O_WRONLY);
+            int fd = getFileDescriptor(redirect->stdErrPath, O_TRUNC | O_CREAT | O_WRONLY);
             dprintf(fd, "%s command not found\n", current[0] ); 
             close(fd);
 
         }
 
-        if(appendStdErr)
+        if(redirect->appendStderr)
         {
-            int fd = getFileDescriptor(stdErrAppendPath, O_APPEND | O_CREAT | O_WRONLY);
+            int fd = getFileDescriptor(redirect->stderrAppendPath, O_APPEND | O_CREAT | O_WRONLY);
             dprintf(fd, "%s command not found\n", current[0] );
             close(fd);
 
@@ -238,8 +239,9 @@ int externalInChild(char **current, bool redirectedStdErr, bool appendStdErr, ch
     return 126;
 }
 
-int runPipeline(bool toBackground, char *commandTokens[],char *commands[100][100], int commandCount, char **historyBuffer, bool redirectedstdout, bool redirectedstderr, bool appendStdOut, bool appendStdErr, char *stdoutPath, char *stderrPath, char *stdoutAppendPath, char *stderrAppendPath)
+int runPipeline(bool toBackground, char *commandTokens[],char *commands[100][100], int commandCount, char **historyBuffer, redirectConfig *redirect)
 {
+    (void)commandTokens;
     int prevPipeReadEnd = -1;
     pid_t pids[MAX_PIPELINE_PROCS];
     int pidCount = 0;
@@ -247,9 +249,9 @@ int runPipeline(bool toBackground, char *commandTokens[],char *commands[100][100
     for (int i = 0; i < commandCount; i++)
     {
         int fds[2] = {-1, -1};
-        bool is_last_command = (i == commandCount - 1);
+        bool isLastCommand = (i == commandCount - 1);
 
-        if (!is_last_command)
+        if (!isLastCommand)
         {
             if (pipe(fds) == -1)
             {
@@ -284,7 +286,7 @@ int runPipeline(bool toBackground, char *commandTokens[],char *commands[100][100
                 close(prevPipeReadEnd);
             }
 
-            if (!is_last_command)
+            if (!isLastCommand)
             {
                
                 close(fds[0]); 
@@ -294,16 +296,16 @@ int runPipeline(bool toBackground, char *commandTokens[],char *commands[100][100
             else
             {
             
-                if (reddirectInChild(redirectedstdout, redirectedstderr, appendStdOut, appendStdErr, stdoutPath, stderrPath, stdoutAppendPath, stderrAppendPath) != 0)
+                if (reddirectInChild(redirect) != 0)
                 {
                     _exit(1); 
                 }
             }
             
-            int status = runBuiltinChild(commandTokens, commands[i], historyBuffer, redirectedstdout, redirectedstderr, appendStdOut, appendStdErr, stdoutPath, stderrPath, stdoutAppendPath, stderrAppendPath);
+            int status = runBuiltinChild(commands[i], redirect, historyBuffer);
             if (status == 1)
             { 
-                status = externalInChild(commands[i], redirectedstderr, appendStdErr, stderrPath, stderrAppendPath);
+                status = externalInChild(commands[i], redirect);
             }
             _exit(status); 
         }
@@ -317,7 +319,7 @@ int runPipeline(bool toBackground, char *commandTokens[],char *commands[100][100
                 close(prevPipeReadEnd);
             }
     
-            if (!is_last_command)
+            if (!isLastCommand)
             {
                 close(fds[1]); 
                 prevPipeReadEnd = fds[0];

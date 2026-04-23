@@ -1,9 +1,10 @@
 #include "commands.h"
 #include "proccesess.h"
+#include "definitions.h"
 
 #include <errno.h>
 
-int executeBin(bool toBackground, char *stdoutPath,char *stdErrPath,char *stdOutAppendPath, char *stdErrAppendPath, bool redirectedstdout, bool redirectedStdErr, bool appendStdOut, bool appendStdErr, char *tokens[])
+int executeBin(bool toBackground, const redirectConfig *redirect , char *tokens[])
 {
   
   char* binPath = getPath(tokens[0]);
@@ -20,10 +21,10 @@ int executeBin(bool toBackground, char *stdoutPath,char *stdErrPath,char *stdOut
 
     restoreSignalsInChild();
 
-    if(redirectedstdout)
+    if(redirect->redirectStdout)
     {
       
-      int fdOut = getFileDescriptor(stdoutPath, O_TRUNC | O_CREAT | O_WRONLY);
+      int fdOut = getFileDescriptor(redirect->stdOutPath, O_TRUNC | O_CREAT | O_WRONLY);
       if (fdOut < 0)
       {
         return -1;
@@ -33,10 +34,10 @@ int executeBin(bool toBackground, char *stdoutPath,char *stdErrPath,char *stdOut
 
     }
       
-    if (redirectedStdErr)
+    if (redirect->redirectStderr)
     {
       
-      int fdError = getFileDescriptor(stdErrPath, O_TRUNC | O_CREAT | O_WRONLY);
+      int fdError = getFileDescriptor(redirect->stdErrPath, O_TRUNC | O_CREAT | O_WRONLY);
       if (fdError < 0)
       {
        return -1;
@@ -46,9 +47,9 @@ int executeBin(bool toBackground, char *stdoutPath,char *stdErrPath,char *stdOut
 
     }
 
-    if(appendStdOut)
+    if(redirect->appendStdout)
     {
-      int fdOut = getFileDescriptor(stdOutAppendPath, O_APPEND | O_CREAT | O_WRONLY);
+      int fdOut = getFileDescriptor(redirect->stdoutAppendPath, O_APPEND | O_CREAT | O_WRONLY);
       if (fdOut < 0)
       {
         return -1;
@@ -58,9 +59,9 @@ int executeBin(bool toBackground, char *stdoutPath,char *stdErrPath,char *stdOut
 
     }
 
-    if(appendStdErr)
+    if(redirect->appendStderr)
     {
-      int fdOut = getFileDescriptor(stdErrAppendPath, O_APPEND | O_CREAT | O_WRONLY);
+      int fdOut = getFileDescriptor(redirect->stderrAppendPath, O_APPEND | O_CREAT | O_WRONLY);
       if (fdOut < 0)
       {
         return -1;
@@ -78,6 +79,8 @@ int executeBin(bool toBackground, char *stdoutPath,char *stdErrPath,char *stdOut
   
   else
   {
+    
+    free(binPath);
     if (toBackground)
     {
       addJob(pid, tokens[0]);
@@ -87,13 +90,14 @@ int executeBin(bool toBackground, char *stdoutPath,char *stdErrPath,char *stdOut
     {
       waitpid(pid, NULL, 0);
     }
+  
   }
-  free(binPath); // this free should be here? seems like mem leak
+  
   return 0 ;
 }
 
 
-int type(char **current, bool redirectedstdout, bool redirectedstderr, bool appendStdOut, bool appendStdErr, char *stdoutPath, char *stderrPath, char *stdoutAppendPath, char *stderrAppendPath)
+int type(char **current, const redirectConfig *redirect)
 {
     
     if (current[1] == NULL)
@@ -131,9 +135,9 @@ int type(char **current, bool redirectedstdout, bool redirectedstderr, bool appe
     }
     if(exitCode == 0)
     {
-        if(redirectedstdout)
+        if(redirect->redirectStdout)
         {
-            int fd = getFileDescriptor(stdoutPath, O_TRUNC | O_WRONLY | O_CREAT);
+            int fd = getFileDescriptor(redirect->stdOutPath, O_TRUNC | O_WRONLY | O_CREAT);
             if (fd == -1)
             {
                 printf("shell: couldnt write to file\n");
@@ -142,9 +146,9 @@ int type(char **current, bool redirectedstdout, bool redirectedstderr, bool appe
             dprintf(fd, "%s", message);
             close(fd);
         }
-        else if(appendStdOut)
+        else if(redirect->redirectStderr)
         {
-            int fd = getFileDescriptor(stdoutAppendPath, O_APPEND | O_WRONLY | O_CREAT);
+            int fd = getFileDescriptor(redirect->stdErrPath, O_APPEND | O_WRONLY | O_CREAT);
             if (fd == -1)
             {
                 printf("shell: couldnt write to file\n");
@@ -161,9 +165,9 @@ int type(char **current, bool redirectedstdout, bool redirectedstderr, bool appe
     }
     else
     {
-        if(redirectedstderr)
+        if(redirect->appendStderr)
         {
-            int fd = getFileDescriptor(stderrPath, O_APPEND | O_WRONLY | O_CREAT);
+            int fd = getFileDescriptor(redirect->stderrAppendPath, O_APPEND | O_WRONLY | O_CREAT);
             if (fd == -1)
             {
                 printf("shell: couldnt write to file\n");
@@ -172,9 +176,9 @@ int type(char **current, bool redirectedstdout, bool redirectedstderr, bool appe
             dprintf(fd, "%s", message);
             close(fd);
         }
-        else if(appendStdErr)
+        else if(redirect->redirectStderr)
         {
-            int fd = getFileDescriptor(stderrAppendPath, O_APPEND | O_WRONLY | O_CREAT);
+            int fd = getFileDescriptor(redirect->stdErrPath, O_APPEND | O_WRONLY | O_CREAT);
             if (fd == -1)
             {
                 printf("shell: couldnt write to file\n");
@@ -194,7 +198,7 @@ int type(char **current, bool redirectedstdout, bool redirectedstderr, bool appe
 
 }
 
-int history(char **current, char *historyBuffer[], bool redirectedstdout, bool appendStdOut,  char *stdoutPath, char *stdoutAppendPath)
+int history(char **current, char *historyBuffer[], const redirectConfig *redirect)
 {
 
     int linesToDisplay = 0 ;
@@ -253,9 +257,9 @@ int history(char **current, char *historyBuffer[], bool redirectedstdout, bool a
            }
         }
 
-    if (redirectedstdout)
+    if (redirect->stdOutPath)
     {
-        int fd = getFileDescriptor(stdoutPath, O_CREAT | O_WRONLY | O_TRUNC);
+        int fd = getFileDescriptor(redirect->stdOutPath, O_CREAT | O_WRONLY | O_TRUNC);
         for (int i = start ; i < end ; i++)
         {
             dprintf(fd, "%d %s\n", i + 1, historyBuffer[i]);
@@ -264,9 +268,9 @@ int history(char **current, char *historyBuffer[], bool redirectedstdout, bool a
         return 0;
     }
     
-    if (appendStdOut)
+    if (redirect->appendStdout)
     {
-        int fd = getFileDescriptor(stdoutAppendPath, O_CREAT | O_WRONLY | O_APPEND);
+        int fd = getFileDescriptor(redirect->stdoutAppendPath, O_CREAT | O_WRONLY | O_APPEND);
         for (int i = start ; i < end ; i++)
         {
             dprintf(fd, "%d %s\n", i + 1, historyBuffer[i]);
@@ -284,22 +288,22 @@ int history(char **current, char *historyBuffer[], bool redirectedstdout, bool a
     return 0;
 }
 
-int pwd( bool redirectedstdout, bool appendStdOut, char *stdoutPath,  char *stdoutAppendPath)
+int pwd(const redirectConfig *redirect)
 {
     char cwd[1024];
       if (getcwd(cwd, sizeof(cwd)))
       {
-        if (redirectedstdout)
+        if (redirect->redirectStdout)
         {
-            int fd = getFileDescriptor(stdoutPath, O_CREAT | O_TRUNC | O_WRONLY);
+            int fd = getFileDescriptor(redirect->stdOutPath, O_CREAT | O_TRUNC | O_WRONLY);
             dprintf(fd, "%s\n",cwd);
             close(fd);
             return 0;
         }
 
-        if (appendStdOut)
+        if (redirect->appendStdout)
         {
-            int fd = getFileDescriptor(stdoutAppendPath, O_CREAT | O_APPEND | O_WRONLY);
+            int fd = getFileDescriptor(redirect->stdoutAppendPath, O_CREAT | O_APPEND | O_WRONLY);
             dprintf(fd, "%s\n",cwd);
             close(fd);
             return 0;
@@ -313,7 +317,7 @@ int pwd( bool redirectedstdout, bool appendStdOut, char *stdoutPath,  char *stdo
       }
 }
 
-int cd(char **current, bool redirectedstderr, bool appendStdErr, char *stderrPath, char *stderrAppendPath)
+int cd(char **current, const redirectConfig *redirect)
 {
      if (current[1] == NULL || strcmp ("~", current[1]) == 0 )
       {
@@ -329,18 +333,18 @@ int cd(char **current, bool redirectedstderr, bool appendStdErr, char *stderrPat
       {
         if (chdir(current[1]) != 0)
         {
-          if (redirectedstderr)
+          if (redirect->redirectStderr)
           {
-            int fd = getFileDescriptor(stderrPath, O_CREAT | O_WRONLY | O_TRUNC);
+            int fd = getFileDescriptor(redirect->stdErrPath, O_CREAT | O_WRONLY | O_TRUNC);
             dprintf(fd, "%s: no such file or directory : \"%s\" \n", current[0], current[1]);
             close(fd);
             return 1;
 
           } 
 
-          if (appendStdErr)
+          if (redirect->appendStderr)
           {
-            int fd = getFileDescriptor(stderrAppendPath , O_CREAT | O_WRONLY | O_APPEND);
+            int fd = getFileDescriptor(redirect->stderrAppendPath, O_CREAT | O_WRONLY | O_APPEND);
             dprintf(fd, "%s: no such file or directory : \"%s\" \n", current[0], current[1]);
             close(fd);
             return 1;
@@ -357,11 +361,11 @@ int cd(char **current, bool redirectedstderr, bool appendStdErr, char *stderrPat
       }
 }
 
-int echo(char **current, bool redirectedstdout,  bool appendStdOut, char *stdoutPath,  char *stdoutAppendPath)
+int echo(char **current, const redirectConfig *redirect)
 {
-    if (redirectedstdout)
+    if (redirect->redirectStdout)
     {
-     int fd = getFileDescriptor(stdoutPath , O_WRONLY | O_TRUNC | O_CREAT);
+     int fd = getFileDescriptor(redirect->stdOutPath , O_WRONLY | O_TRUNC | O_CREAT);
      for (int i = 1 ; current[i] != NULL ; i++)
       {
         dprintf(fd,"%s ", current[i]);
@@ -372,10 +376,10 @@ int echo(char **current, bool redirectedstdout,  bool appendStdOut, char *stdout
 
     }
 
-    if (appendStdOut)
+    if (redirect->appendStdout)
     {
     
-        int fd = getFileDescriptor(stdoutAppendPath , O_WRONLY | O_APPEND | O_CREAT);
+        int fd = getFileDescriptor(redirect->stdoutAppendPath , O_WRONLY | O_APPEND | O_CREAT);
         for (int i = 1 ; current[i] != NULL ; i++)
         {
             dprintf(fd,"%s ", current[i]);
@@ -394,12 +398,12 @@ int echo(char **current, bool redirectedstdout,  bool appendStdOut, char *stdout
       return 0;
 }
 
-int jobs(job *jobList,bool redirectedstdout, bool appendStdOut, char *stdoutPath,  char *stdoutAppendPath)
+int jobs(job *jobList, const redirectConfig *redirect)
 {
-    if (redirectedstdout)
+    if (redirect->redirectStdout)
     {
 
-        int fd = getFileDescriptor(stdoutPath , O_WRONLY | O_TRUNC | O_CREAT);
+        int fd = getFileDescriptor(redirect->stdOutPath , O_WRONLY | O_TRUNC | O_CREAT);
         for(int i = 0 ; i < maxJobs ; i++)
         {
             if (jobList[i].running)
@@ -414,10 +418,10 @@ int jobs(job *jobList,bool redirectedstdout, bool appendStdOut, char *stdoutPath
 
     }
 
-    if (appendStdOut)
+    if (redirect->appendStdout)
     {
     
-        int fd = getFileDescriptor(stdoutAppendPath , O_WRONLY | O_APPEND | O_CREAT);
+        int fd = getFileDescriptor(redirect->stdoutAppendPath , O_WRONLY | O_APPEND | O_CREAT);
         for(int i = 0 ; i < maxJobs ; i++)
         {
             if (jobList[i].running)
