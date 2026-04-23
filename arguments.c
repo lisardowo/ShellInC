@@ -4,7 +4,7 @@
 
 char userInput[10000];
 char **commandTokens = NULL;
-char commandTokensCapacity = 0;
+int commandTokensCapacity = 0;
 
 void resetCommandTokens()
 {

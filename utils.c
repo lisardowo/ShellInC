@@ -2,7 +2,6 @@
 #include <fcntl.h>
 #include "utils.h"
 
-char binPath[100000]; 
 #define generalPermissions 0644
 
 void createPrompt(char *prompt, size_t promptSize)

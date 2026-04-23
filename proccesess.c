@@ -111,7 +111,7 @@ void checkBacktroundJobs()
 }
 
 
-int reddirectInChild(redirectConfig *redirect)
+int reddirectInChild(const redirectConfig *redirect)
 {
     if (redirect->redirectStdout)
     {
