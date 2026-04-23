@@ -291,13 +291,19 @@ size_t fileMatches(char *prefix, char ***matches)
         }
 
         char fullPath[MAX_LINUX_SIZE];
+        int written;
         if(strcmp(dirPath, ".") == 0)
         {
-            snprintf(fullPath, sizeof(fullPath), "%s", entry->d_name);
+            written = snprintf(fullPath, sizeof(fullPath), "%s", entry->d_name);
         }
         else
         {
-            snprintf(fullPath, sizeof(fullPath), "%s%s", dirPath, entry->d_name);   
+            written = snprintf(fullPath, sizeof(fullPath), "%s%s", dirPath, entry->d_name);   
+        }
+
+        if(written < 0 || written > (int)sizeof(fullPath))
+        {
+            continue;
         }
 
         struct stat st;

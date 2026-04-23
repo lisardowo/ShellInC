@@ -146,9 +146,9 @@ int type(char **current, const redirectConfig *redirect)
             dprintf(fd, "%s", message);
             close(fd);
         }
-        else if(redirect->redirectStderr)
+        else if(redirect->appendStdout)
         {
-            int fd = getFileDescriptor(redirect->stdErrPath, O_APPEND | O_WRONLY | O_CREAT);
+            int fd = getFileDescriptor(redirect->stdoutAppendPath, O_APPEND | O_WRONLY | O_CREAT);
             if (fd == -1)
             {
                 printf("shell: couldnt write to file\n");
@@ -178,7 +178,7 @@ int type(char **current, const redirectConfig *redirect)
         }
         else if(redirect->redirectStderr)
         {
-            int fd = getFileDescriptor(redirect->stdErrPath, O_APPEND | O_WRONLY | O_CREAT);
+            int fd = getFileDescriptor(redirect->stdErrPath, O_TRUNC | O_WRONLY | O_CREAT);
             if (fd == -1)
             {
                 printf("shell: couldnt write to file\n");
@@ -235,15 +235,17 @@ int history(char **current, char *historyBuffer[], const redirectConfig *redirec
                     return 1;
                 }
             }
-            int targetIndex = atoi(indexStr);
-            if(targetIndex <= 0 || targetIndex > linesToDisplay)
+            errno = 0;
+            char *endPtr = NULL;
+            long targetIndex = strtol(indexStr, &endPtr, 10);
+            if(errno == ERANGE || endPtr == indexStr || targetIndex <= 0 || targetIndex > linesToDisplay)
             {
                 printf("shell: !%s: not found\n", indexStr);
                 return 1;
             }
 
-            start = targetIndex - 1;
-            end = targetIndex ; 
+            start = (int)targetIndex - 1;
+            end = (int)targetIndex ; 
         }
         else
         {
@@ -257,7 +259,7 @@ int history(char **current, char *historyBuffer[], const redirectConfig *redirec
            }
         }
 
-    if (redirect->stdOutPath)
+    if (redirect->redirectStdout)
     {
         int fd = getFileDescriptor(redirect->stdOutPath, O_CREAT | O_WRONLY | O_TRUNC);
         for (int i = start ; i < end ; i++)
