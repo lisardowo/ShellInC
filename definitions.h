@@ -3,6 +3,9 @@
 
 #include "sys/types.h"
 
+#define MAX_LINUX_SIZE 4096
+
+
 typedef struct 
 {
     int id;

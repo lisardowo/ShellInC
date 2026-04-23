@@ -12,7 +12,7 @@
 #include "utils.h"
 #include "definitions.h"
 
-extern char binPath[100000];
+extern char binPath[MAX_LINUX_SIZE];
 
 
 int executeBin(bool toBackground, const redirectConfig *redirect , char *tokens[]);

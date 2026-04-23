@@ -1,8 +1,9 @@
 
 #include "selfCompletion.h"
+#include "definitions.h"
 
 static struct termios g_old;
-#define linuxMaxSize 4096
+
 #define maxSequenceLen  5
 
 bool startCommandsList(availableCommands *list)
@@ -243,7 +244,7 @@ size_t lengestCommonPrefix(char **matches, size_t count)
 size_t fileMatches(char *prefix, char ***matches)
 {
  
-    char dirPath[linuxMaxSize];
+    char dirPath[MAX_LINUX_SIZE];
     char filePrefix[256];
 
     char *lastSlash = strrchr(prefix, '/');
@@ -289,18 +290,14 @@ size_t fileMatches(char *prefix, char ***matches)
             continue;
         }
 
-        char fullPath[linuxMaxSize];
+        char fullPath[MAX_LINUX_SIZE];
         if(strcmp(dirPath, ".") == 0)
         {
             snprintf(fullPath, sizeof(fullPath), "%s", entry->d_name);
         }
         else
         {
-            size_t maxCopy = sizeof(fullPath) - 1;
-            strncpy(fullPath, dirPath, maxCopy);
-            fullPath[maxCopy] = '\0';
-            strncat(fullPath, entry->d_name, maxCopy - strlen(fullPath));
-            
+            snprintf(fullPath, sizeof(fullPath), "%s%s", dirPath, entry->d_name);   
         }
 
         struct stat st;

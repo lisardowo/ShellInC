@@ -383,7 +383,7 @@ static void REPL(shellState *state)
     segmentType typeOfSegments[MAX_SEGMENTS];
     int segmentCount = 0;
     
-    if(!parseTokensToSegments(segments, typeOfSegments, &redirect, &segmentCount))// TODO where does pipelineCOnditionals comes from?
+    if(!parseTokensToSegments(segments, typeOfSegments, &redirect, &segmentCount))
     {
       continue;
     }
