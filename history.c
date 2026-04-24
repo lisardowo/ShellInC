@@ -3,8 +3,8 @@
 #include "history.h"
 #include <errno.h>
 
-#define historyBufferMaxSize 9999
-#define ownerOnlyPermissions 0600
+#define HISTORY_BUFFER_MAX_SIZE 9999
+#define PEERMISSIONS 0644
 
 static void getHistoryFilePath(char *pathBuffer, size_t size);
 
@@ -23,7 +23,7 @@ void addHistory(char *command, int *historyCount, char *historyBuffer[])
    
    
    
-   if(*historyCount < historyBufferMaxSize)
+   if(*historyCount < HISTORY_BUFFER_MAX_SIZE)
    {
 
         historyBuffer[*historyCount] = strdup(command);
@@ -35,8 +35,8 @@ void addHistory(char *command, int *historyCount, char *historyBuffer[])
    {
         
         free(historyBuffer[0]);
-        memmove(&historyBuffer[0], &historyBuffer[1], (historyBufferMaxSize - 1) * sizeof(char *));
-        historyBuffer[historyBufferMaxSize - 1] = strdup(command);
+        memmove(&historyBuffer[0], &historyBuffer[1], (HISTORY_BUFFER_MAX_SIZE - 1) * sizeof(char *));
+        historyBuffer[HISTORY_BUFFER_MAX_SIZE - 1] = strdup(command);
 
     }
 
@@ -48,7 +48,7 @@ void dumpHistory(char *historyBuffer[])
     char historyPath[4096];
     getHistoryFilePath(historyPath, sizeof(historyPath));
 
-    int fd = open(historyPath, O_CREAT | O_TRUNC | O_WRONLY | O_NOFOLLOW, ownerOnlyPermissions);
+    int fd = open(historyPath, O_CREAT | O_TRUNC | O_WRONLY | O_NOFOLLOW, PEERMISSIONS);
 
     if(fd == -1)
     {
@@ -118,10 +118,10 @@ int getHistory(char *historyBuffer[])//try deleting histCount as argument and de
             line[lineLen] = '\0';
             if(lineLen > 0)
             {
-                if(historyCount >= historyBufferMaxSize)
+                if(historyCount >= HISTORY_BUFFER_MAX_SIZE)
                 {
                     close(historyFd);
-                    historyBuffer[historyBufferMaxSize - 1] = NULL;
+                    historyBuffer[HISTORY_BUFFER_MAX_SIZE - 1] = NULL;
                     return historyCount;
                 }
                 historyBuffer[historyCount] = strdup(line);
@@ -138,7 +138,7 @@ int getHistory(char *historyBuffer[])//try deleting histCount as argument and de
         }
     }
   }
-        if(lineLen > 0 && historyCount < historyBufferMaxSize)
+        if(lineLen > 0 && historyCount < HISTORY_BUFFER_MAX_SIZE)
         {
             line[lineLen] = '\0';
             historyBuffer[historyCount] = strdup(line);
