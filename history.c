@@ -33,7 +33,8 @@ void addHistory(char *command, int *historyCount, char *historyBuffer[])
 
    else
    {
-        
+    
+        free(historyBuffer[0]);
         free(historyBuffer[0]);
         memmove(&historyBuffer[0], &historyBuffer[1], (HISTORY_BUFFER_MAX_SIZE - 1) * sizeof(char *));
         historyBuffer[HISTORY_BUFFER_MAX_SIZE - 1] = strdup(command);
@@ -64,6 +65,7 @@ void dumpHistory(char *historyBuffer[])
         dprintf(fd, "%s\n", historyBuffer[i]);
     }
     close(fd);
+
 }
 
 static void getHistoryFilePath(char *pathBuffer, size_t size)
@@ -118,7 +120,7 @@ int getHistory(char *historyBuffer[])//try deleting histCount as argument and de
             line[lineLen] = '\0';
             if(lineLen > 0)
             {
-                if(historyCount >= HISTORY_BUFFER_MAX_SIZE)
+                if(historyCount > HISTORY_BUFFER_MAX_SIZE)
                 {
                     close(historyFd);
                     historyBuffer[HISTORY_BUFFER_MAX_SIZE - 1] = NULL;
