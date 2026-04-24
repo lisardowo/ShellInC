@@ -91,7 +91,7 @@ this means that you achieved it, good job!
 
 If you achieved the flag, heres some things you can do:
 
- 1. First of all, please take a look at the issues section of this repo and upload your [win report](templates/eportWin_template.md) to the vulnerability you exploited so other people can understand your work and maybe use it as reference if they're stuck
+ 1. First of all, please take a look at the issues section of this repo and upload your [win report](templates/reportWin_template.md) to the vulnerability you exploited so other people can understand your work and maybe use it as reference if they're stuck
  2. Then, if you want, you can fork the repo and try to patch the bug, so you can have a more secure version
 
 --- 
