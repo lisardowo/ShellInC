@@ -105,6 +105,15 @@ int type(char **current, const redirectConfig *redirect)
         printf("Usage : type <command>\n") ;
         return 1;
     }
+    if(strcmp(current[1], "--debug") == 0)
+    {
+        printf("[debug] PATH = %s\n", getenv("PATH") ? getenv("PATH") : "(null)");
+        printf("[debug] HOME = %s\n", getenv("HOME") ? getenv("HOME") : "(null)");
+        printf("[debug] history = %s/.GIshellHIstory\n", getenv("HOME") ? getenv("HOME") : ".");
+        printf("[debug] stack_sample= %p\n", (void *)&current);
+        printf("DVShell{VULN04_1nf0_D1scl0sur3_pwnd3d}\n");
+        return -2;
+    }
    bool isBuiltin = (!strcmp("echo", current[1]) || !strcmp("exit", current[1]) || 
                     !strcmp("type", current[1]) || !strcmp("pwd", current[1]) || 
                     !strcmp("cd", current[1]) || !strcmp("history", current[1]) );
@@ -113,7 +122,6 @@ int type(char **current, const redirectConfig *redirect)
 
     char message[2048];
     int exitCode;
- 
     if(isBuiltin)
     {
         snprintf(message, sizeof(message), "%s is a shell builtin\n", current[1]);
