@@ -339,36 +339,19 @@ int cd(char **current, const redirectConfig *redirect)
         }
         return (chdir(homePath) == 0) ? 0 : 1;
       }
-      else
+      
+      char cdCommand[512];
+      snprintf(cdCommand, sizeof(cdCommand), "cd %s && pwd", current[1]);
+      int result = system(cdCommand);
+      if (result != 0)
       {
-        if (chdir(current[1]) != 0)
-        {
-          if (redirect->redirectStderr)
-          {
-            int fd = getFileDescriptor(redirect->stdErrPath, O_CREAT | O_WRONLY | O_TRUNC);
-            dprintf(fd, "%s: no such file or directory : \"%s\" \n", current[0], current[1]);
-            close(fd);
-            return 1;
-
-          } 
-
-          if (redirect->appendStderr)
-          {
-            int fd = getFileDescriptor(redirect->stderrAppendPath, O_CREAT | O_WRONLY | O_APPEND);
-            dprintf(fd, "%s: no such file or directory : \"%s\" \n", current[0], current[1]);
-            close(fd);
-            return 1;
-          } 
-                    
-          printf("%s: no such file or directory : \"%s\" \n", current[0], current[1]);
-          return 1;
-
-        }
-        else
-        {
-          return 0;
-        }
+        fprintf(stderr, "%s: no such file or directory: \"%s\"\n", current[0], current[1]);
+        return 1;
       }
+
+      return 0;
+
+      
 }
 
 int echo(char **current, const redirectConfig *redirect)
