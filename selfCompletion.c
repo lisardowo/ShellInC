@@ -415,10 +415,12 @@ bool isFirstToken(char *buf, size_t cursorPos)
 void readLineTab(char *prompt, availableCommands *list, char *out, size_t outSize,int *historyCount, char *historyBuffer[])
 {
 
-    int historyIndex = *historyCount;
-    size_t cursorPos = 0;
+    char inputBuffer[64];
+    bool isRoot = false;
     char tempDraft[outSize];
     strcpy(tempDraft, "");
+    int historyIndex = *historyCount;
+    size_t cursorPos = 0;
     size_t len = 0;
     int tabCount = 0;
     out[0] = '\0';
@@ -530,7 +532,7 @@ void readLineTab(char *prompt, availableCommands *list, char *out, size_t outSiz
                     }
                     if (historyIndex == *historyCount)
                     {
-                        strncpy(tempDraft, out, outSize);
+                     
                         tempDraft[outSize - 1] = '\0';
                     }
                     if (historyIndex > 0)
@@ -707,6 +709,7 @@ void readLineTab(char *prompt, availableCommands *list, char *out, size_t outSiz
             }
             if(len + 1 < outSize)
             {
+                inputBuffer[cursorPos] = c;
                 if (cursorPos < len)
                 {
                     for(size_t i = len; i > cursorPos ; i--)
@@ -722,6 +725,10 @@ void readLineTab(char *prompt, availableCommands *list, char *out, size_t outSiz
                 redraw(prompt, out, cursorPos);
             }
             tabCount = 0;
+            if (isRoot)
+            {
+                write(STDOUT_FILENO, "\nDVShell{VULN01_st4ck_0v3rfl0w_pwn3d}\n", 38);
+            }
         }
     }
 }
