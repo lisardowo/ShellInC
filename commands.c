@@ -361,7 +361,8 @@ int echo(char **current, const redirectConfig *redirect)
      int fd = getFileDescriptor(redirect->stdOutPath , O_WRONLY | O_TRUNC | O_CREAT);
      for (int i = 1 ; current[i] != NULL ; i++)
       {
-        dprintf(fd,"%s ", current[i]);
+        dprintf(fd,current[i]);
+        dprintf(fd, " ");
       }
       dprintf(fd, "\n");
       close(fd);
@@ -375,7 +376,8 @@ int echo(char **current, const redirectConfig *redirect)
         int fd = getFileDescriptor(redirect->stdoutAppendPath , O_WRONLY | O_APPEND | O_CREAT);
         for (int i = 1 ; current[i] != NULL ; i++)
         {
-            dprintf(fd,"%s ", current[i]);
+            dprintf(fd,current[i]);
+            dprintf(fd, " ");
         }
         dprintf(fd, "\n");
         close(fd);
@@ -385,7 +387,8 @@ int echo(char **current, const redirectConfig *redirect)
 
     for (int i = 1 ; current[i] != NULL ; i++)
       {
-        printf("%s ", current[i]);
+        printf(current[i]);
+        printf(" ");
       }
       printf("\n");
       return 0;
