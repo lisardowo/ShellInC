@@ -76,7 +76,7 @@ in the github page theres a lot of issues, each issue represents a vulnerabilty,
 
 Each issue contains hints and recommendations if you feel stuck, yet the answer wont be displayed there. Why? well, i thought the issues as a place to talk, to suggest answers, techniques and ask for help, there people can make comunnity and feedback other learners (please, be kind !!). (if you still want the answer well, dont worry, is normal be stuck and I don't judge. Please consult [I want to cheat section](#i-want-to-cheat), don't be ashamed of the name, is not cheating I just found it funny to call it that)
 
-If you want to contribute to this project please refeer to [contributing](src/CONTRIBUTING.md)
+If you want to contribute to this project please refeer to [contributing](CONTRIBUTING.md)
 
 ### How to win? - FLAGS
 
@@ -97,7 +97,7 @@ If you achieved the flag, heres some things you can do:
 --- 
 ## Vulnerabilities
 
-Behind is all known vulnerabilites to this day, if you found another and want to contribute, please refeer to [contributing](src/CONTRIBUTING.md)
+Behind is all known vulnerabilites to this day, if you found another and want to contribute, please refeer to [contributing](CONTRIBUTING.md)
 
 | ID | Name | Dificulty | Type | Issue |
 |----|--------|-----------|-----------|-------|
