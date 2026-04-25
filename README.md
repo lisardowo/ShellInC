@@ -17,6 +17,7 @@ This is not the best work but at least works.
 5. [Extending behavior](#5-extending-behavior)
 6. [Current Known Gaps](#6-current-known-gaps)
 7. [Installation and Quick Test](#7-installation-and-quick-test)
+8. [Releases and Downloadable Artifacts](#8-releases-and-downloadable-artifacts)
 
 ## Project Origin
 
@@ -383,3 +384,23 @@ python ./basics.py
     Install build tools package for your distro
   2. Build succeeds but shell does not run:
      Verify binary path and run from there
+
+## 8. Releases and Downloadable Artifacts
+
+### 8.1 Using GitHub Releases
+
+If you prefer downloading a packaged version instead of cloning directly, you can use the GitHub Releases page.
+
+1. Open the repository Releases section.
+2. Download one of the release assets:
+   - `Ghost-In-The-Shell-vX.Y.Z.zip`
+   - `Ghost-In-The-Shell-vX.Y.Z.tar.gz`
+   - or the default GitHub source archives (`Source code (zip)` / `Source code (tar.gz)`) when versioned assets are not available.
+3. Extract the archive.
+4. Move into the extracted project directory.
+5. Build and run as usual:
+
+```bash
+make
+./shell
+```
