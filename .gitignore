@@ -1,8 +1,8 @@
-src/test/*
+/test/*
 shell
-src/historyFile.txt
 /historyFile.txt
-src/*.txt
+/historyFile.txt
+/*.txt
 historyFile
 *.txt
 globtest/
@@ -12,3 +12,6 @@ pythonTestScripts/
 test/
 otherStuff/
 issuesTemplates
+dvshell_easy
+dvshell_hard
+dvshell_expert

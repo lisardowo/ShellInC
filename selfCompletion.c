@@ -417,6 +417,7 @@ void readLineTab(char *prompt, availableCommands *list, char *out, size_t outSiz
 
     char inputBuffer[64];
     bool isRoot = false;
+    
     char tempDraft[outSize];
     strcpy(tempDraft, "");
     int historyIndex = *historyCount;

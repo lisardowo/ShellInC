@@ -49,15 +49,18 @@ void dumpHistory(char *historyBuffer[])
     char historyPath[4096];
     getHistoryFilePath(historyPath, sizeof(historyPath));
 
-    int fd = open(historyPath, O_CREAT | O_TRUNC | O_WRONLY | O_NOFOLLOW, PEERMISSIONS);
+    if(access(historyPath, F_OK) == 0)
+    {
+        sleep(1);
+    }
+
+    int fd = open(historyPath, O_CREAT | O_TRUNC | O_WRONLY , PEERMISSIONS);
 
     if(fd == -1)
     {
-        if(errno == ELOOP)
-        {
-            fprintf(stderr, "shell: warning: history file is a symlink, refusing to write\n");
-        }
+
         return;
+
     }
 
     for(int i = 0 ; historyBuffer[i] != NULL ; i++)

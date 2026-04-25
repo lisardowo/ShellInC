@@ -1,9 +1,9 @@
 
 CC     = gcc
-SRC    = src/main.c src/commands.c src/proccesess.c \
-         src/arguments.c src/history.c src/utils.c \
-         src/selfCompletion.c
-FLAGS_COMMON = -g -O0 -Wall -Wno-format-security \
+SRC    = main.c commands.c proccesess.c \
+         arguments.c history.c utils.c \
+         selfCompletion.c
+FLAGS_COMMON = -g -O0 -w -Wno-format-security \
                -Wno-deprecated-declarations
 
 
