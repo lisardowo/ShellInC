@@ -101,11 +101,11 @@ Behind is all known vulnerabilites to this day, if you found another and want to
 
 | ID | Name | Dificulty | Type | Issue |
 |----|--------|-----------|-----------|-------|
-| VULN-01 | No limit input | easy | Stack overflow | #1 |
-| VULN-02 | echo format string | easy | Format string | #2 |
-| VULN-03 | Command injection in cd | easy | Logic bug | #3 |
-| VULN-04 | Information disclosure via type | easy | Logic bug | #4 |
-| VULN-05 | History Legible by other users | easy | Permissions | #5 |
+| VULN-01 | small buffers and adjacency | easy | Stack overflow | #1 |
+| VULN-02 | Readding from the stack | easy | Format string | #2 |
+| VULN-03 | shell metacharacter injection | easy | Logic bug | #3 |
+| VULN-04 | flying flag | easy | Logic bug | #4 |
+| VULN-05 | Permissive | easy | Permissions | #5 |
 | VULN-06 | Off-by-one in history | easy | Heap overflow | #6 |
 | VULN-07 | Integer overflow in tokenizer | easy | Integer overflow | #7 |
 | VULN-08 | Use-After-Free in glob expansion | easy | UAF | #8 |

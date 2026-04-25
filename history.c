@@ -30,6 +30,7 @@ void addHistory(char *command, int *historyCount, char *historyBuffer[])
         (*historyCount)++;
 
    }
+   
 
    else
    {
@@ -40,6 +41,7 @@ void addHistory(char *command, int *historyCount, char *historyBuffer[])
         historyBuffer[HISTORY_BUFFER_MAX_SIZE - 1] = strdup(command);
 
     }
+    char secret_flag[] = "DVShell{heap_overflow_flag}";
 
 }
 
