@@ -420,10 +420,14 @@ void expandArguments(char *tokens[])
 
             else
             {
-                if(temp_position < (int)sizeof(tempBuffer) - 1)   
+                if(temp_position < (int)sizeof(tempBuffer))   
                 {
                     tempBuffer[temp_position++] = originalToken[v];
                 }
+				else
+				{
+					tempBuffer[sizeof(tempBuffer) - 1] = '\0';
+				}
             }   
         }
                 tempBuffer[temp_position++] = '\0';
