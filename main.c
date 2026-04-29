@@ -5,7 +5,6 @@
 
 #include "definitions.h"
 #include "proccesess.h"
-#include "pipeline.h"
 #include "arguments.h"
 #include "utils.h"
 #include "selfCompletion.h"

@@ -1,6 +1,6 @@
 CC = gcc
 CFLAGS = -Wall -Wextra
-SRC := $(filter-out test/%, $(wildcard ./*.c))
+SRC = main.c arguments.c commands.c utils.c history.c proccesess.c selfCompletion.c
 OUT = shell
 
 
